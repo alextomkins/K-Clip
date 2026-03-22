@@ -1,4 +1,4 @@
-# 🎵 Daily Song Guessing Game — Project Constitution
+# 🎵 K-Clip — Project Constitution
 
 ## 1. Purpose
 
