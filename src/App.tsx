@@ -4,7 +4,6 @@ import { SongSearch } from './components/SongSearch'
 import { GuessHistory } from './components/GuessHistory'
 import { ResultScreen } from './components/ResultScreen'
 import { CLIP_DURATIONS } from './types'
-import joppingAudio from './assets/jopping.mp3'
 
 function App() {
   const {
@@ -21,7 +20,7 @@ function App() {
     .filter((g) => g.result !== 'skipped')
     .map((g) => g.songId)
 
-  console.log('[DEBUG] Today\'s song:', puzzle.song.title, '—', puzzle.song.artist)
+  const audioSrc = `${import.meta.env.BASE_URL}audio/${puzzle.song.audioFile}`
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-4">
@@ -47,9 +46,9 @@ function App() {
       {/* Audio Player */}
       <div className="mb-6 w-full flex justify-center">
         <AudioPlayer
-          audioSrc={joppingAudio}
-          clipIndex={currentClipIndex}
-          disabled={!isPlaying}
+          audioSrc={audioSrc}
+          clipIndex={isPlaying ? currentClipIndex : CLIP_DURATIONS.length - 1}
+          disabled={false}
         />
       </div>
 
