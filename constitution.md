@@ -51,17 +51,18 @@ After the game ends:
   * Generates a text-based summary (Wordle-style)
   * Copies it to clipboard
 
-### Example Share Output (TBD format)
+### Share Output Format
 
 ```
-Daily Song #12
-🟩⬜⬜⬜⬜⬜
-Guessed in 3/6
+🎵 K-Clip #12
+🟩🟥🟥⬜⬜⬜
+Guessed in 1/6
 
-🎵
+alextomkins.github.io/K-Clip/ 🎵
 ```
 
-(*Exact format to be finalized*)
+* Emoji key: 🟩 correct, 🟧 partial (right artist), 🟥 incorrect or skipped, ⬜ unused
+* Score shows `X/6` on a loss
 
 ---
 
@@ -69,16 +70,20 @@ Guessed in 3/6
 
 ### Frontend
 
-* Framework: React (TypeScript)
-* Styling: Tailwind CSS
-* Hosting: GitHub Pages
-* App type: Fully static frontend (no backend initially)
+* Framework: React 19 (TypeScript 5)
+* Build tool: Vite
+* Styling: Tailwind CSS 3
+* Linting: ESLint 9 (flat config) with typescript-eslint and eslint-plugin-react-hooks
+* Hosting: GitHub Pages (base path `/K-Clip/`)
+* Deployment: `gh-pages` package (`npm run deploy`)
+* App type: Fully static frontend (no backend)
 
 ### Audio Handling (Current)
 
-* Audio files are stored locally in the repository
-* Initial implementation uses a **single 30-second audio file**
+* Audio files are stored in `public/audio/` in the repository
+* Each song has a **single 30-second MP3 file**
 * Clips are generated client-side by controlling playback timing
+* File naming convention: `{artist-slug}-{song-slug}.mp3` (e.g. `aespa-black-mamba.mp3`)
 
 ### Audio Handling (Future)
 
@@ -100,12 +105,13 @@ The application should manage:
 * Game result (win/loss)
 * Clip progression state
 
-Persistence (initial approach):
+Persistence:
 
-* Use browser storage (e.g. localStorage) to:
-
-  * Prevent replaying the same day’s puzzle
-  * Maintain progress on refresh
+* Uses `localStorage` under the key `songguess-state`
+* Stores the full `GameState` object as JSON (date, guesses, status)
+* On load, validates the stored shape and rejects data from a different date
+* Automatically saves after each guess
+* Tab re-focus triggers a date check; reloads the page if the day has changed
 
 ---
 
@@ -113,30 +119,44 @@ Persistence (initial approach):
 
 * Puzzle selection is **deterministic and date-based**
 * All users receive the **same song for a given date**
-* Implementation should use a **date-based hash or index system**
-* Must be consistent across:
+* Daily reset is at **00:00 AEST (UTC+10)**
+* Algorithm:
 
-  * Devices
-  * Browsers
-  * Timezones (define clearly — e.g. UTC or local)
+  1. The full song list is **Fisher-Yates shuffled** at build time using a seeded PRNG (mulberry32, seed `20260322`)
+  2. Each day maps to an index: `dayNumber % songCount`
+  3. The shuffled order ensures songs cycle without clustering by artist
+
+* Epoch: **2026-03-22 AEST** (Day 1)
+* Consistent across devices and browsers (all calculations use a fixed AEST offset of UTC+10)
 
 ---
 
 ## 7. Guessing System
 
-* Users select guesses from a **predefined list of songs**
+* Users select guesses from a **predefined list of songs** via a searchable autocomplete dropdown
+* The dropdown filters by song title or artist name as the user types
+* Keyboard navigation is supported (↑↓ arrows, Enter, Escape)
 * Each song entry includes:
 
-  * Song name
+  * Song title
   * Artist name
+
+### Song List
+
+* Defined as a static TypeScript array in `src/data/songs.ts`
+* Currently contains **157 K-pop tracks** across ~30 artists
+* Entries specify `title` and `artist`; `id` and `audioFile` are auto-generated:
+
+  * ID: `{artist-slug}-{title-slug}` (e.g. `ikon-killing-me`)
+  * Audio: `{artist-slug}-{title-slug}.mp3`
+* The list is sorted alphabetically by artist, then by title
 
 ### Matching Rules
 
 * Matching is based on **selected list items**, not free-text input
-* Avoid ambiguity by ensuring:
-
-  * Unique song + artist combinations
-  * Clean, consistent formatting
+* A guess for the **wrong song but correct artist** is scored as **partial** (🟧)
+* Unique song + artist slug combinations ensure no ID collisions
+* Already-guessed songs are excluded from the dropdown
 
 ---
 
@@ -219,11 +239,7 @@ When modifying or extending this project:
 
 ## 12. Open Questions / To Be Defined
 
-* Final share text format
-* Exact timezone definition for daily reset (UTC vs local)
-* Structure and storage of the predefined song list
-* UI/UX for song selection (search, dropdown, autocomplete)
-* Handling duplicate or similar song names
+*All previously open questions have been resolved and documented above.*
 
 ---
 

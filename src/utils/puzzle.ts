@@ -1,9 +1,10 @@
 import { DailyPuzzle } from '../types'
 import songs from '../data/songs'
 
-/** Epoch date for day numbering (2026-03-22 UTC = Day 1) */
+/** Epoch date for day numbering (2026-03-22 AEST = Day 1) */
 const EPOCH = Date.UTC(2026, 2, 21)
 const MS_PER_DAY = 86_400_000
+const AEST_OFFSET_MS = 10 * 60 * 60 * 1000
 
 /**
  * Simple seeded PRNG (mulberry32).
@@ -29,9 +30,9 @@ const shuffledIndices: number[] = (() => {
   return indices
 })()
 
-/** Get today's date string in UTC (YYYY-MM-DD) */
-export function getTodayUTC(): string {
-  const now = new Date()
+/** Get today's date string in AEST (YYYY-MM-DD) */
+export function getTodayAEST(): string {
+  const now = new Date(Date.now() + AEST_OFFSET_MS)
   return now.toISOString().split('T')[0]
 }
 

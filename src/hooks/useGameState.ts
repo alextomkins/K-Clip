@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { GameState, Guess, GuessResult, DailyPuzzle, MAX_GUESSES, CLIP_DURATIONS } from '../types'
-import { getTodayUTC, getDailyPuzzle } from '../utils/puzzle'
+import { getTodayAEST, getDailyPuzzle } from '../utils/puzzle'
 import { loadGameState, saveGameState } from '../utils/storage'
 import songs from '../data/songs'
 
@@ -9,7 +9,7 @@ function createInitialState(date: string): GameState {
 }
 
 export function useGameState() {
-  const today = useMemo(() => getTodayUTC(), [])
+  const today = useMemo(() => getTodayAEST(), [])
   const puzzle: DailyPuzzle = useMemo(() => getDailyPuzzle(today), [today])
 
   const [gameState, setGameState] = useState<GameState>(() => {
@@ -19,7 +19,7 @@ export function useGameState() {
   // Reload if the date changes while the tab is open
   useEffect(() => {
     const onFocus = () => {
-      if (getTodayUTC() !== today) window.location.reload()
+      if (getTodayAEST() !== today) window.location.reload()
     }
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
