@@ -4,6 +4,7 @@ import { SongSearch } from './components/SongSearch'
 import { GuessHistory } from './components/GuessHistory'
 import { ResultScreen } from './components/ResultScreen'
 import { CLIP_DURATIONS } from './types'
+import songs from './data/songs'
 
 function App() {
   const {
@@ -48,7 +49,6 @@ function App() {
         <AudioPlayer
           audioSrc={audioSrc}
           clipIndex={isPlaying ? currentClipIndex : CLIP_DURATIONS.length - 1}
-          disabled={false}
         />
       </div>
 
@@ -59,9 +59,9 @@ function App() {
             {attemptsRemaining} guess{attemptsRemaining !== 1 ? 'es' : ''} remaining
           </p>
           <SongSearch
+            songs={songs}
             onGuess={submitGuess}
             onSkip={skipGuess}
-            disabled={false}
             guessedSongIds={guessedSongIds}
           />
         </div>
@@ -73,7 +73,7 @@ function App() {
 
       {/* Guess history */}
       <div className="mt-2 w-full flex justify-center">
-        <GuessHistory guesses={gameState.guesses} />
+        <GuessHistory guesses={gameState.guesses} songs={songs} />
       </div>
     </div>
   )

@@ -7,6 +7,13 @@ export interface Song {
 
 export type GuessResult = 'correct' | 'partial' | 'incorrect' | 'skipped'
 
+export const RESULT_EMOJI: Record<GuessResult, string> = {
+  correct: '🟩',
+  partial: '🟧',
+  incorrect: '🟥',
+  skipped: '🟥',
+}
+
 export interface Guess {
   songId: string
   result: GuessResult

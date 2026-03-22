@@ -10,6 +10,7 @@ interface UseAudioPlayerOptions {
 interface UseAudioPlayerReturn {
   isPlaying: boolean
   progress: number
+  error: boolean
   play: () => void
   stop: () => void
 }
@@ -19,6 +20,7 @@ export function useAudioPlayer({ src, clipDuration }: UseAudioPlayerOptions): Us
   const animFrameRef = useRef<number>(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [error, setError] = useState(false)
 
   // Initialize audio element once, update src when it changes
   useEffect(() => {
@@ -64,12 +66,14 @@ export function useAudioPlayer({ src, clipDuration }: UseAudioPlayerOptions): Us
     // Always restart from beginning
     audio.currentTime = 0
     setProgress(0)
+    setError(false)
     setIsPlaying(true)
 
     audio.play().then(() => {
       animFrameRef.current = requestAnimationFrame(updateProgress)
     }).catch(() => {
       setIsPlaying(false)
+      setError(true)
     })
   }, [updateProgress])
 
@@ -78,5 +82,5 @@ export function useAudioPlayer({ src, clipDuration }: UseAudioPlayerOptions): Us
     stopPlayback()
   }, [clipDuration, stopPlayback])
 
-  return { isPlaying, progress, play, stop: stopPlayback }
+  return { isPlaying, progress, error, play, stop: stopPlayback }
 }

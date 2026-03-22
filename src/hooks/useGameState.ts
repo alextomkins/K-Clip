@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { GameState, Guess, GuessResult, DailyPuzzle, MAX_GUESSES, CLIP_DURATIONS } from '../types'
 import { getTodayUTC, getDailyPuzzle } from '../utils/puzzle'
 import { loadGameState, saveGameState } from '../utils/storage'
@@ -16,13 +16,32 @@ export function useGameState() {
     return loadGameState(today) ?? createInitialState(today)
   })
 
+  // Reload if the date changes while the tab is open
+  useEffect(() => {
+    const onFocus = () => {
+      if (getTodayUTC() !== today) window.location.reload()
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [today])
+
   const currentClipIndex = Math.min(gameState.guesses.length, CLIP_DURATIONS.length - 1)
-  const currentClipDuration = CLIP_DURATIONS[currentClipIndex]
   const attemptsRemaining = MAX_GUESSES - gameState.guesses.length
 
-  const submitGuess = useCallback((songId: string) => {
+  const applyGuess = useCallback((guess: Guess) => {
     if (gameState.status !== 'playing') return
+    const newGuesses = [...gameState.guesses, guess]
+    const isLastGuess = newGuesses.length >= MAX_GUESSES
+    const newState: GameState = {
+      ...gameState,
+      guesses: newGuesses,
+      status: guess.result === 'correct' ? 'won' : isLastGuess ? 'lost' : 'playing',
+    }
+    setGameState(newState)
+    saveGameState(newState)
+  }, [gameState])
 
+  const submitGuess = useCallback((songId: string) => {
     const isCorrect = songId === puzzle.song.id
     let result: GuessResult = 'incorrect'
     if (isCorrect) {
@@ -33,43 +52,17 @@ export function useGameState() {
         result = 'partial'
       }
     }
-    const guess: Guess = { songId, result }
-
-    const newGuesses = [...gameState.guesses, guess]
-    const isLastGuess = newGuesses.length >= MAX_GUESSES
-
-    const newState: GameState = {
-      ...gameState,
-      guesses: newGuesses,
-      status: isCorrect ? 'won' : isLastGuess ? 'lost' : 'playing',
-    }
-
-    setGameState(newState)
-    saveGameState(newState)
-  }, [gameState, puzzle.song.id])
+    applyGuess({ songId, result })
+  }, [puzzle.song.id, puzzle.song.artist, applyGuess])
 
   const skipGuess = useCallback(() => {
-    if (gameState.status !== 'playing') return
-
-    const guess: Guess = { songId: '', result: 'skipped' }
-    const newGuesses = [...gameState.guesses, guess]
-    const isLastGuess = newGuesses.length >= MAX_GUESSES
-
-    const newState: GameState = {
-      ...gameState,
-      guesses: newGuesses,
-      status: isLastGuess ? 'lost' : 'playing',
-    }
-
-    setGameState(newState)
-    saveGameState(newState)
-  }, [gameState])
+    applyGuess({ songId: '', result: 'skipped' })
+  }, [applyGuess])
 
   return {
     puzzle,
     gameState,
     currentClipIndex,
-    currentClipDuration,
     attemptsRemaining,
     submitGuess,
     skipGuess,

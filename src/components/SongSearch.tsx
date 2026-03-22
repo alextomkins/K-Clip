@@ -1,15 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { Song } from '../types'
-import songs from '../data/songs'
 
 interface SongSearchProps {
+  songs: Song[]
   onGuess: (songId: string) => void
   onSkip: () => void
-  disabled: boolean
   guessedSongIds: string[]
 }
 
-export function SongSearch({ onGuess, onSkip, disabled, guessedSongIds }: SongSearchProps) {
+export function SongSearch({ songs, onGuess, onSkip, guessedSongIds }: SongSearchProps) {
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [highlightIndex, setHighlightIndex] = useState(-1)
@@ -81,19 +80,15 @@ export function SongSearch({ onGuess, onSkip, disabled, guessedSongIds }: SongSe
           ref={inputRef}
           type="text"
           value={query}
-          disabled={disabled}
           placeholder="Search for a song or artist..."
-          className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-600 focus:border-green-500 focus:outline-none disabled:opacity-50"
+          className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-600 focus:border-green-500 focus:outline-none"
           onChange={(e) => {
             setQuery(e.target.value)
             setIsOpen(true)
             setHighlightIndex(-1)
           }}
           onFocus={() => setIsOpen(true)}
-          onBlur={() => {
-            // Delay to allow click on list item
-            setTimeout(() => setIsOpen(false), 150)
-          }}
+          onBlur={() => setIsOpen(false)}
           onKeyDown={handleKeyDown}
         />
 
@@ -101,6 +96,7 @@ export function SongSearch({ onGuess, onSkip, disabled, guessedSongIds }: SongSe
         {isOpen && filtered.length > 0 && (
           <ul
             ref={listRef}
+            onMouseDown={(e) => e.preventDefault()}
             className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-gray-800 border border-gray-600 rounded-lg shadow-lg"
           >
             {filtered.map((song, i) => (
@@ -122,7 +118,10 @@ export function SongSearch({ onGuess, onSkip, disabled, guessedSongIds }: SongSe
         )}
 
         {isOpen && query.trim() && filtered.length === 0 && (
-          <div className="absolute z-10 mt-1 w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-400 text-sm">
+          <div
+            onMouseDown={(e) => e.preventDefault()}
+            className="absolute z-10 mt-1 w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-400 text-sm"
+          >
             No matches found
           </div>
         )}
@@ -131,8 +130,7 @@ export function SongSearch({ onGuess, onSkip, disabled, guessedSongIds }: SongSe
       {/* Skip button */}
       <button
         onClick={onSkip}
-        disabled={disabled}
-        className="mt-2 w-full py-2 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-2 w-full py-2 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-gray-300 transition-colors"
       >
         Skip →
       </button>

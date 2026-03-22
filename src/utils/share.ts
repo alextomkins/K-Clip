@@ -1,8 +1,8 @@
-import { GameState, DailyPuzzle, MAX_GUESSES } from '../types'
+import { GameState, DailyPuzzle, MAX_GUESSES, RESULT_EMOJI } from '../types'
 
 export function generateShareText(gameState: GameState, puzzle: DailyPuzzle): string {
   const guessLine = gameState.guesses
-    .map((g) => g.result === 'correct' ? '🟩' : g.result === 'partial' ? '🟧' : g.result === 'skipped' ? '🟥' : '🟥')
+    .map((g) => RESULT_EMOJI[g.result])
     .join('')
   const padded = guessLine + '⬜'.repeat(MAX_GUESSES - gameState.guesses.length)
 
@@ -13,7 +13,7 @@ export function generateShareText(gameState: GameState, puzzle: DailyPuzzle): st
     padded,
     `Guessed in ${score}`,
     '',
-    '🎵',
+    'alextomkins.github.io/K-Clip/ 🎵',
   ].join('\n')
 }
 
