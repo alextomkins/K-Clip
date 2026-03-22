@@ -1,0 +1,36 @@
+import { Song } from '../types'
+
+const songs: Song[] = [
+  { id: '1', title: 'Jopping', artist: 'SuperM', audioFile: 'jopping.mp3' },
+  { id: '2', title: 'How You Like That', artist: 'BLACKPINK', audioFile: 'how-you-like-that.mp3' },
+  { id: '3', title: 'Psycho', artist: 'Red Velvet', audioFile: 'psycho.mp3' },
+  { id: '4', title: 'God\'s Menu', artist: 'Stray Kids', audioFile: 'gods-menu.mp3' },
+  { id: '5', title: 'FEVER', artist: 'ENHYPEN', audioFile: 'fever.mp3' },
+  { id: '6', title: 'LATATA', artist: '(G)I-DLE', audioFile: 'latata.mp3' },
+  { id: '7', title: 'Deja Vu', artist: 'ATEEZ', audioFile: 'deja-vu.mp3' },
+  { id: '8', title: 'LOVE DIVE', artist: 'IVE', audioFile: 'love-dive.mp3' },
+  { id: '9', title: 'After LIKE', artist: 'IVE', audioFile: 'after-like.mp3' },
+  { id: '10', title: 'Hype Boy', artist: 'NewJeans', audioFile: 'hype-boy.mp3' },
+  { id: '11', title: 'Attention', artist: 'NewJeans', audioFile: 'attention.mp3' },
+  { id: '12', title: 'ANTIFRAGILE', artist: 'LE SSERAFIM', audioFile: 'antifragile.mp3' },
+  { id: '13', title: 'Next Level', artist: 'aespa', audioFile: 'next-level.mp3' },
+  { id: '14', title: 'Savage', artist: 'aespa', audioFile: 'savage.mp3' },
+  { id: '15', title: 'TOMBOY', artist: '(G)I-DLE', audioFile: 'tomboy.mp3' },
+  { id: '16', title: 'Feel My Rhythm', artist: 'Red Velvet', audioFile: 'feel-my-rhythm.mp3' },
+  { id: '17', title: 'SNEAKERS', artist: 'ITZY', audioFile: 'sneakers.mp3' },
+  { id: '18', title: 'WANNABE', artist: 'ITZY', audioFile: 'wannabe.mp3' },
+  { id: '19', title: 'Butter', artist: 'BTS', audioFile: 'butter.mp3' },
+  { id: '20', title: 'Killing Me', artist: 'iKON', audioFile: 'killing-me.mp3' },
+  { id: '21', title: 'Love Shot', artist: 'EXO', audioFile: 'love-shot.mp3' },
+  { id: '22', title: 'Very Nice', artist: 'SEVENTEEN', audioFile: 'very-nice.mp3' },
+  { id: '23', title: 'Super', artist: 'SEVENTEEN', audioFile: 'super.mp3' },
+  { id: '24', title: 'MIROH', artist: 'Stray Kids', audioFile: 'miroh.mp3' },
+  { id: '25', title: 'Panorama', artist: 'IZ*ONE', audioFile: 'panorama.mp3' },
+  { id: '26', title: 'Eleven', artist: 'IVE', audioFile: 'eleven.mp3' },
+  { id: '27', title: 'Pink Venom', artist: 'BLACKPINK', audioFile: 'pink-venom.mp3' },
+  { id: '28', title: 'Shut Down', artist: 'BLACKPINK', audioFile: 'shut-down.mp3' },
+  { id: '29', title: 'Candy', artist: 'NCT DREAM', audioFile: 'candy.mp3' },
+  { id: '30', title: 'Growl', artist: 'EXO', audioFile: 'growl.mp3' },
+]
+
+export default songs
