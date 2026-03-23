@@ -25,7 +25,10 @@ export function useGameState() {
     return () => window.removeEventListener('focus', onFocus)
   }, [today])
 
-  const currentClipIndex = Math.min(gameState.guesses.length, CLIP_DURATIONS.length - 1)
+  const currentClipIndex =
+    gameState.status === 'won'
+      ? Math.min(gameState.guesses.length - 1, CLIP_DURATIONS.length - 1)
+      : Math.min(gameState.guesses.length, CLIP_DURATIONS.length - 1)
   const attemptsRemaining = MAX_GUESSES - gameState.guesses.length
 
   const applyGuess = useCallback((guess: Guess) => {

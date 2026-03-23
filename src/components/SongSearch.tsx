@@ -12,12 +12,13 @@ export function SongSearch({ songs, onGuess, onSkip, guessedSongIds }: SongSearc
   const [query, setQuery] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [highlightIndex, setHighlightIndex] = useState(-1)
+  const [selectedSong, setSelectedSong] = useState<Song | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
 
   const availableSongs = songs.filter((s) => !guessedSongIds.includes(s.id))
 
-  const filtered = query.trim()
+  const filtered = query.trim() && !selectedSong
     ? availableSongs.filter((s) => {
         const q = query.toLowerCase()
         return s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q)
@@ -35,13 +36,35 @@ export function SongSearch({ songs, onGuess, onSkip, guessedSongIds }: SongSearc
   }, [highlightIndex])
 
   function handleSelect(song: Song) {
-    onGuess(song.id)
-    setQuery('')
+    setSelectedSong(song)
+    setQuery(`${song.title} — ${song.artist}`)
     setIsOpen(false)
+    setHighlightIndex(-1)
+    inputRef.current?.blur()
+  }
+
+  function handleSubmit() {
+    if (!selectedSong) return
+    onGuess(selectedSong.id)
+    setSelectedSong(null)
+    setQuery('')
+    setHighlightIndex(-1)
+  }
+
+  function handleQueryChange(value: string) {
+    setQuery(value)
+    setSelectedSong(null)
+    setIsOpen(true)
     setHighlightIndex(-1)
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' && selectedSong) {
+      e.preventDefault()
+      handleSubmit()
+      return
+    }
+
     if (!isOpen || filtered.length === 0) {
       if (e.key === 'ArrowDown') {
         setIsOpen(true)
@@ -68,6 +91,8 @@ export function SongSearch({ songs, onGuess, onSkip, guessedSongIds }: SongSearc
         break
       case 'Escape':
         setIsOpen(false)
+        setSelectedSong(null)
+        setQuery('')
         setHighlightIndex(-1)
         break
     }
@@ -81,19 +106,19 @@ export function SongSearch({ songs, onGuess, onSkip, guessedSongIds }: SongSearc
           type="text"
           value={query}
           placeholder="Search for a song or artist..."
-          className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border border-gray-600 focus:border-green-500 focus:outline-none"
-          onChange={(e) => {
-            setQuery(e.target.value)
-            setIsOpen(true)
-            setHighlightIndex(-1)
-          }}
-          onFocus={() => setIsOpen(true)}
+          className={`w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-500 border focus:outline-none transition-colors ${
+            selectedSong
+              ? 'border-green-500 text-green-300'
+              : 'border-gray-600 focus:border-green-500'
+          }`}
+          onChange={(e) => handleQueryChange(e.target.value)}
+          onFocus={() => { if (!selectedSong) setIsOpen(true) }}
           onBlur={() => setIsOpen(false)}
           onKeyDown={handleKeyDown}
         />
 
         {/* Dropdown */}
-        {isOpen && filtered.length > 0 && (
+        {isOpen && !selectedSong && filtered.length > 0 && (
           <ul
             ref={listRef}
             onMouseDown={(e) => e.preventDefault()}
@@ -117,7 +142,7 @@ export function SongSearch({ songs, onGuess, onSkip, guessedSongIds }: SongSearc
           </ul>
         )}
 
-        {isOpen && query.trim() && filtered.length === 0 && (
+        {isOpen && !selectedSong && query.trim() && filtered.length === 0 && (
           <div
             onMouseDown={(e) => e.preventDefault()}
             className="absolute z-10 mt-1 w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-gray-400 text-sm"
@@ -127,13 +152,22 @@ export function SongSearch({ songs, onGuess, onSkip, guessedSongIds }: SongSearc
         )}
       </div>
 
-      {/* Skip button */}
-      <button
-        onClick={onSkip}
-        className="mt-2 w-full py-2 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-gray-300 transition-colors"
-      >
-        Skip →
-      </button>
+      {/* Submit + Skip buttons */}
+      <div className="mt-2 flex gap-2">
+        <button
+          onClick={handleSubmit}
+          disabled={!selectedSong}
+          className="flex-1 py-2 rounded-lg text-sm font-semibold transition-colors bg-green-600 hover:bg-green-500 active:bg-green-700 text-white disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed"
+        >
+          Submit Guess
+        </button>
+        <button
+          onClick={onSkip}
+          className="py-2 px-4 rounded-lg text-sm font-medium bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-gray-300 transition-colors"
+        >
+          Skip →
+        </button>
+      </div>
     </div>
   )
 }

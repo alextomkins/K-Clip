@@ -237,13 +237,103 @@ When modifying or extending this project:
 
 ---
 
-## 12. Open Questions / To Be Defined
+## 12. Planned Changes
+
+The following improvements have been scoped and are ready to implement.
+
+---
+
+### 12.1 — Separate Song Selection from Guess Submission
+
+**Problem:** Clicking a song in the `SongSearch` dropdown immediately submits the guess, giving users no chance to confirm their choice.
+
+**Solution:** Add an explicit **Submit** button.
+
+* `SongSearch` gains a `selectedSong: Song | null` local state.
+* Clicking a dropdown item (or pressing Enter on a highlighted item) populates the text input with the song/artist name and stores the selection — it does **not** call `onGuess`.
+* A **"Submit Guess"** button becomes active only when a song is selected.
+* Clicking Submit calls `onGuess(selectedSong.id)` and resets the component state.
+* Pressing Escape or clearing the input clears the selection.
+* The Skip button behaviour is unchanged.
+
+---
+
+### 12.2 — Freeze Clip Indicator on Correct Guess
+
+**Problem:** `currentClipIndex` in `useGameState` is derived as `Math.min(guesses.length, CLIP_DURATIONS.length - 1)`. When the user wins, one more guess is appended, so the indicator advances by one extra step even though no new clip was unlocked.
+
+**Solution:** When `gameState.status === 'won'`, subtract 1 from the index so it reflects the clip that was actually playing when the correct guess was made.
+
+```ts
+const currentClipIndex =
+  gameState.status === 'won'
+    ? Math.min(gameState.guesses.length - 1, CLIP_DURATIONS.length - 1)
+    : Math.min(gameState.guesses.length, CLIP_DURATIONS.length - 1)
+```
+
+No other files need to change; `App.tsx` already reads `currentClipIndex` from the hook.
+
+---
+
+### 12.3 — Celebration Effect on Win
+
+**Problem:** The win state is not visually rewarding — a small emoji and one line of text is easy to miss.
+
+**Solution:** Trigger a confetti burst when the game transitions to `won`.
+
+* Install `canvas-confetti` (`npm i canvas-confetti` + `npm i -D @types/canvas-confetti`).
+* In `ResultScreen` (or a dedicated `WinCelebration` component), fire `confetti()` once inside a `useEffect` that runs when `isWin` is first true.
+* Keep the existing text result; confetti is additive, not a replacement.
+* The effect should be brief (default duration ≈ 3 s) and not block interaction.
+
+---
+
+### 12.4 — How to Play / Colour Legend
+
+**Problem:** New users have no in-game explanation of the rules or what the emoji colours mean.
+
+**Solution:** Add an **info icon button** (ℹ️) in the header that opens a modal overlay.
+
+Modal content:
+
+* **How to play** — brief bullet list matching the core game rules (6 guesses, clips unlock after each wrong guess, same daily song for everyone).
+* **Colour legend:**
+  * 🟩 Correct song
+  * 🟧 Right artist, wrong song
+  * 🟥 Wrong / skipped
+  * ⬜ Unused guess
+* A close button (✕) and clicking the backdrop both dismiss the modal.
+* The modal is a self-contained `HowToPlay` component rendered inside `App.tsx`.
+* State (`isOpen`) lives in `App.tsx` or inside the component itself.
+
+---
+
+### 12.5 — Next-Song Countdown in Footer + Version Number
+
+**Problem:** Users have no indication of when the next puzzle arrives, and there is no visible version identifier.
+
+**Solution (countdown):**
+
+* Add a `<footer>` to `App.tsx` below the guess history.
+* Calculate time remaining until `00:00 AEST (UTC+10)` using `Date.now()`.
+* A `useCountdown` hook (or inline `useEffect` + `setInterval`) updates a `hh:mm:ss` string every second.
+* Display: `Next song in 04:22:15`.
+
+**Solution (version number):**
+
+* Source the version from `package.json`. In Vite this can be done via `import.meta.env` by adding a `define` block to `vite.config.ts`: `__APP_VERSION__: JSON.stringify(process.env.npm_package_version)`, and declaring `declare const __APP_VERSION__: string` in `vite-env.d.ts`.
+* Display `v{__APP_VERSION__}` in the footer alongside the countdown, styled in muted grey.
+* Increment `version` in `package.json` as part of each deploy (`npm version patch` before `npm run deploy`).
+
+---
+
+## 13. Open Questions / To Be Defined
 
 *All previously open questions have been resolved and documented above.*
 
 ---
 
-## 13. Versioning Philosophy
+## 14. Versioning Philosophy
 
 * Start minimal and iterate
 * Avoid premature scaling decisions
@@ -251,7 +341,7 @@ When modifying or extending this project:
 
 ---
 
-## 14. Definition of Done (MVP)
+## 15. Definition of Done (MVP)
 
 The MVP is complete when:
 
