@@ -30,6 +30,7 @@ function App() {
     attemptsRemaining,
     submitGuess,
     skipGuess,
+    justWon,
   } = useGameState(selectedDate)
 
   const [howToPlayOpen, setHowToPlayOpen] = useState(false)
@@ -124,7 +125,7 @@ function App() {
         </div>
       ) : (
         <div className="mb-4 w-full flex justify-center">
-          <ResultScreen gameState={gameState} puzzle={puzzle} />
+          <ResultScreen gameState={gameState} puzzle={puzzle} justWon={justWon} />
         </div>
       )}
 

@@ -17,9 +17,12 @@ export function useGameState(date: string) {
     return loadGameState(date) ?? createInitialState(date)
   })
 
+  const [justWon, setJustWon] = useState(false)
+
   // Reset state when the selected date changes
   useEffect(() => {
     setGameState(loadGameState(date) ?? createInitialState(date))
+    setJustWon(false)
   }, [date])
 
   // Reload if the real date changes while the tab is open — only when viewing today's puzzle
@@ -47,6 +50,7 @@ export function useGameState(date: string) {
       guesses: newGuesses,
       status: guess.result === 'correct' ? 'won' : isLastGuess ? 'lost' : 'playing',
     }
+    if (guess.result === 'correct') setJustWon(true)
     setGameState(newState)
     saveGameState(newState)
   }, [gameState])
@@ -76,5 +80,6 @@ export function useGameState(date: string) {
     attemptsRemaining,
     submitGuess,
     skipGuess,
+    justWon,
   }
 }
