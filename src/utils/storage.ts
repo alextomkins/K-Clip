@@ -1,10 +1,12 @@
 import { GameState } from '../types'
 
-const STORAGE_KEY = 'songguess-state'
+function storageKey(date: string): string {
+  return `kclip-state-${date}`
+}
 
 export function loadGameState(date: string): GameState | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(storageKey(date))
     if (!raw) return null
     const parsed = JSON.parse(raw)
     if (
@@ -21,5 +23,5 @@ export function loadGameState(date: string): GameState | null {
 }
 
 export function saveGameState(state: GameState): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  localStorage.setItem(storageKey(state.date), JSON.stringify(state))
 }

@@ -8,22 +8,29 @@ function createInitialState(date: string): GameState {
   return { date, guesses: [], status: 'playing' }
 }
 
-export function useGameState() {
+export function useGameState(date: string) {
   const today = useMemo(() => getTodayAEST(), [])
-  const puzzle: DailyPuzzle = useMemo(() => getDailyPuzzle(today), [today])
+  const isToday = date === today
+  const puzzle: DailyPuzzle = useMemo(() => getDailyPuzzle(date), [date])
 
   const [gameState, setGameState] = useState<GameState>(() => {
-    return loadGameState(today) ?? createInitialState(today)
+    return loadGameState(date) ?? createInitialState(date)
   })
 
-  // Reload if the date changes while the tab is open
+  // Reset state when the selected date changes
   useEffect(() => {
+    setGameState(loadGameState(date) ?? createInitialState(date))
+  }, [date])
+
+  // Reload if the real date changes while the tab is open — only when viewing today's puzzle
+  useEffect(() => {
+    if (!isToday) return
     const onFocus = () => {
       if (getTodayAEST() !== today) window.location.reload()
     }
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
-  }, [today])
+  }, [today, isToday])
 
   const currentClipIndex =
     gameState.status === 'won'

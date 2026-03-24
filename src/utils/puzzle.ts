@@ -46,6 +46,11 @@ export function getDayNumber(dateStr: string): number {
   return Math.floor((date - EPOCH) / MS_PER_DAY)
 }
 
+/** Convert a day number back to its AEST date string (YYYY-MM-DD) */
+export function getDateForDay(dayNumber: number): string {
+  return new Date(EPOCH + dayNumber * MS_PER_DAY).toISOString().split('T')[0]
+}
+
 /** Deterministic puzzle selection: maps a date to a shuffled song */
 export function getDailyPuzzle(dateStr: string): DailyPuzzle {
   const dayNumber = getDayNumber(dateStr)

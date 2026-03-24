@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import confetti from 'canvas-confetti'
 import { GameState, DailyPuzzle } from '../types'
 import { generateShareText, copyToClipboard } from '../utils/share'
 
@@ -11,6 +12,16 @@ export function ResultScreen({ gameState, puzzle }: ResultScreenProps) {
   const [copied, setCopied] = useState(false)
 
   const isWin = gameState.status === 'won'
+  const alreadyWonOnMount = useRef(isWin)
+
+  useEffect(() => {
+    if (!isWin || alreadyWonOnMount.current) return
+    confetti({
+      particleCount: 120,
+      spread: 80,
+      origin: { y: 0.6 },
+    })
+  }, [isWin])
 
   async function handleShare() {
     const text = generateShareText(gameState, puzzle)

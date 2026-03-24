@@ -327,6 +327,44 @@ Modal content:
 
 ---
 
+### 12.6 — Previous Puzzle Archive
+
+**Problem:** Users can only play today's puzzle. There is no way to go back and play missed days.
+
+**Solution:** Allow the user to navigate to any past day's puzzle via a date selector in the UI.
+
+#### URL / Routing
+
+* No router library is needed. Use the query string: `?day=3` to indicate a specific day number.
+* On load, read `new URLSearchParams(window.location.search).get('day')`. If present and valid (integer ≥ 1, ≤ today's day number), use that day; otherwise fall back to today.
+* The active day number is held in a `selectedDay` state in `App.tsx` (or derived inside `useGameState`).
+* Navigating to a past puzzle does **not** affect the tab-focus date-change reload — that only fires if `selectedDay` is today.
+
+#### Puzzle & State Loading
+
+* `getDailyPuzzle` already accepts any date string, so computing the puzzle for a past day requires only converting the day number back to a date string (inverse of `getDayNumber`).
+* Add a helper `getDateForDay(dayNumber: number): string` to `puzzle.ts`.
+* `storage.ts` currently uses a single key `songguess-state`. Change `loadGameState` / `saveGameState` to accept the date string and key each entry as `kclip-state-{YYYY-MM-DD}`.
+  * Today's existing key (`songguess-state`) should be **migrated** on first load: if the new key is empty but the old key has valid data for today, copy it to the new key and remove the old one.
+* Past puzzles are fully playable and their state persists independently.
+
+#### UI — Day Navigation
+
+* Add **‹** (previous) and **›** (next) arrow buttons flanking the `Day #N` text in the header.
+* The **›** button is disabled when viewing today's puzzle.
+* The **‹** button is disabled when `selectedDay === 1` (the first ever puzzle).
+* Clicking an arrow updates `selectedDay`, rewrites the URL query string with `history.replaceState`, and loads the corresponding puzzle + saved state.
+* When viewing a past puzzle, show a subtle banner below the header: `📅 Day #N — {YYYY-MM-DD}` so the user knows they are not on today's puzzle.
+* The audio player, guess input, clip indicator, guess history, and result screen all work identically for past puzzles.
+
+#### Constraints
+
+* Past puzzles are playable but the tab-focus reload only triggers for today's puzzle. Navigating to an archive day while the tab is in the background and midnight passes should not cause a reload.
+* The `useCountdown` footer is always based on real-time and is not affected by which day is selected.
+* Do not expose a full calendar or date-picker UI — simple prev/next arrows are sufficient.
+
+---
+
 ## 13. Open Questions / To Be Defined
 
 *All previously open questions have been resolved and documented above.*
