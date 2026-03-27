@@ -5,6 +5,8 @@ interface UseAudioPlayerOptions {
   src: string
   /** Maximum duration (in seconds) to play */
   clipDuration: number
+  /** Volume level 0.0–1.0 (default: 1.0) */
+  volume?: number
 }
 
 interface UseAudioPlayerReturn {
@@ -15,7 +17,7 @@ interface UseAudioPlayerReturn {
   stop: () => void
 }
 
-export function useAudioPlayer({ src, clipDuration }: UseAudioPlayerOptions): UseAudioPlayerReturn {
+export function useAudioPlayer({ src, clipDuration, volume = 1 }: UseAudioPlayerOptions): UseAudioPlayerReturn {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const animFrameRef = useRef<number>(0)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -76,6 +78,13 @@ export function useAudioPlayer({ src, clipDuration }: UseAudioPlayerOptions): Us
       setError(true)
     })
   }, [updateProgress])
+
+  // Update volume whenever it changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume
+    }
+  }, [volume])
 
   // Stop when clipDuration changes (new clip unlocked)
   useEffect(() => {

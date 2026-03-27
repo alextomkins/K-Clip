@@ -12,6 +12,7 @@ export function AudioPlayer({ audioSrc, clipIndex }: AudioPlayerProps) {
   const { isPlaying, progress, error, play, stop } = useAudioPlayer({
     src: audioSrc,
     clipDuration,
+    volume: 0.7,
   })
 
   return (

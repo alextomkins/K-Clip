@@ -36,6 +36,13 @@ The goal is to create a simple, fast, and engaging daily experience that is easy
   * The user guesses correctly, OR
   * The user uses all 6 guesses.
 
+* A **‹ / ›** navigation in the header allows users to browse and play any **past puzzle** (archive mode).
+
+  * The active day is tracked via a `selectedDay` state in `App.tsx`, defaulting to today.
+  * A `?day=N` query string parameter sets the initial day on load.
+  * Archive puzzles are fully playable with independent persisted state.
+  * Tab-focus date reload only fires when viewing today's puzzle.
+
 ---
 
 ## 3. Game Outcome & Sharing
@@ -46,6 +53,7 @@ After the game ends:
 
   * Win or loss state
   * Number of guesses used
+* On a correct guess, a **confetti burst** fires once via `canvas-confetti` (triggered by the `justWon` flag from `useGameState`).
 * Provide a **"Share Result"** button:
 
   * Generates a text-based summary (Wordle-style)
@@ -53,7 +61,7 @@ After the game ends:
 
 ### Share Output Format
 
-```
+```text
 🎵 K-Clip #12
 🟩🟥🟥⬜⬜⬜
 Guessed in 1/6
@@ -84,6 +92,15 @@ alextomkins.github.io/K-Clip/ 🎵
 * Each song has a **single 30-second MP3 file**
 * Clips are generated client-side by controlling playback timing
 * File naming convention: `{artist-slug}-{song-slug}.mp3` (e.g. `aespa-black-mamba.mp3`)
+* Playback volume is set to **0.7** by default via the `volume` prop on `useAudioPlayer`
+
+### UI Features
+
+* **How to Play modal** — an ℹ️ button in the header opens a `HowToPlay` overlay explaining the rules and colour legend. Close via ✕ button or backdrop click.
+* **Stats modal** — a 📊 button in the header opens a `StatsModal` overlay showing Played, Win %, Current Streak, Max Streak, and a guess distribution bar chart. Only today’s puzzle results count toward stats. Close via ✕ button or backdrop click.
+* **Footer** — displayed below the guess history:
+  * `Next song in hh:mm:ss` — live countdown to 00:00 AEST, driven by the `useCountdown` hook.
+  * `v{version}` — sourced from `package.json` via Vite's `define` (`__APP_VERSION__`), declared in `vite-env.d.ts`.
 
 ### Audio Handling (Future)
 
@@ -107,11 +124,17 @@ The application should manage:
 
 Persistence:
 
-* Uses `localStorage` under the key `songguess-state`
+* Uses `localStorage` with per-date keys: `kclip-state-{YYYY-MM-DD}`
 * Stores the full `GameState` object as JSON (date, guesses, status)
 * On load, validates the stored shape and rejects data from a different date
 * Automatically saves after each guess
-* Tab re-focus triggers a date check; reloads the page if the day has changed
+* Each day's state is stored independently, enabling the puzzle archive
+* Tab re-focus triggers a date check; reloads the page if the day has changed (only when viewing today's puzzle)
+* Stats are stored separately under `kclip-stats` as a `StatsRecord` object:
+  * Tracks played, wins, current streak, max streak, guess distribution (1–6 + X), and last played/won dates
+  * Updated only when today’s puzzle ends (archive plays do not count)
+  * Streak resets to 0 if a day is missed (detected on load via `lastPlayedDate`)
+  * Schema merges with defaults on load, so future fields are additive
 
 ---
 
@@ -128,6 +151,7 @@ Persistence:
 
 * Epoch: **2026-03-22 AEST** (Day 1)
 * Consistent across devices and browsers (all calculations use a fixed AEST offset of UTC+10)
+* Helper `getDateForDay(dayNumber: number): string` in `puzzle.ts` converts a day number back to its AEST date string (inverse of `getDayNumber`)
 
 ---
 
@@ -135,7 +159,10 @@ Persistence:
 
 * Users select guesses from a **predefined list of songs** via a searchable autocomplete dropdown
 * The dropdown filters by song title or artist name as the user types
-* Keyboard navigation is supported (↑↓ arrows, Enter, Escape)
+* Selecting a song from the dropdown **populates the input** but does **not** immediately submit the guess
+* A **Submit Guess** button becomes active only when a song is selected; clicking it calls `onGuess` and resets the component
+* Pressing Escape or editing the input after selection clears the selection
+* Keyboard navigation is supported (↑↓ arrows, Enter to select/submit, Escape to clear)
 * Each song entry includes:
 
   * Song title
@@ -213,7 +240,6 @@ These are intentional decisions for this project:
 These are **explicitly NOT required now**, but should influence design decisions:
 
 * User accounts / authentication
-* Streak tracking
 * Song database management
 * Admin tools for adding songs
 * Multiple difficulty modes
@@ -239,129 +265,7 @@ When modifying or extending this project:
 
 ## 12. Planned Changes
 
-The following improvements have been scoped and are ready to implement.
-
----
-
-### 12.1 — Separate Song Selection from Guess Submission
-
-**Problem:** Clicking a song in the `SongSearch` dropdown immediately submits the guess, giving users no chance to confirm their choice.
-
-**Solution:** Add an explicit **Submit** button.
-
-* `SongSearch` gains a `selectedSong: Song | null` local state.
-* Clicking a dropdown item (or pressing Enter on a highlighted item) populates the text input with the song/artist name and stores the selection — it does **not** call `onGuess`.
-* A **"Submit Guess"** button becomes active only when a song is selected.
-* Clicking Submit calls `onGuess(selectedSong.id)` and resets the component state.
-* Pressing Escape or clearing the input clears the selection.
-* The Skip button behaviour is unchanged.
-
----
-
-### 12.2 — Freeze Clip Indicator on Correct Guess
-
-**Problem:** `currentClipIndex` in `useGameState` is derived as `Math.min(guesses.length, CLIP_DURATIONS.length - 1)`. When the user wins, one more guess is appended, so the indicator advances by one extra step even though no new clip was unlocked.
-
-**Solution:** When `gameState.status === 'won'`, subtract 1 from the index so it reflects the clip that was actually playing when the correct guess was made.
-
-```ts
-const currentClipIndex =
-  gameState.status === 'won'
-    ? Math.min(gameState.guesses.length - 1, CLIP_DURATIONS.length - 1)
-    : Math.min(gameState.guesses.length, CLIP_DURATIONS.length - 1)
-```
-
-No other files need to change; `App.tsx` already reads `currentClipIndex` from the hook.
-
----
-
-### 12.3 — Celebration Effect on Win
-
-**Problem:** The win state is not visually rewarding — a small emoji and one line of text is easy to miss.
-
-**Solution:** Trigger a confetti burst when the game transitions to `won`.
-
-* Install `canvas-confetti` (`npm i canvas-confetti` + `npm i -D @types/canvas-confetti`).
-* In `ResultScreen` (or a dedicated `WinCelebration` component), fire `confetti()` once inside a `useEffect` that runs when `isWin` is first true.
-* Keep the existing text result; confetti is additive, not a replacement.
-* The effect should be brief (default duration ≈ 3 s) and not block interaction.
-
----
-
-### 12.4 — How to Play / Colour Legend
-
-**Problem:** New users have no in-game explanation of the rules or what the emoji colours mean.
-
-**Solution:** Add an **info icon button** (ℹ️) in the header that opens a modal overlay.
-
-Modal content:
-
-* **How to play** — brief bullet list matching the core game rules (6 guesses, clips unlock after each wrong guess, same daily song for everyone).
-* **Colour legend:**
-  * 🟩 Correct song
-  * 🟧 Right artist, wrong song
-  * 🟥 Wrong / skipped
-  * ⬜ Unused guess
-* A close button (✕) and clicking the backdrop both dismiss the modal.
-* The modal is a self-contained `HowToPlay` component rendered inside `App.tsx`.
-* State (`isOpen`) lives in `App.tsx` or inside the component itself.
-
----
-
-### 12.5 — Next-Song Countdown in Footer + Version Number
-
-**Problem:** Users have no indication of when the next puzzle arrives, and there is no visible version identifier.
-
-**Solution (countdown):**
-
-* Add a `<footer>` to `App.tsx` below the guess history.
-* Calculate time remaining until `00:00 AEST (UTC+10)` using `Date.now()`.
-* A `useCountdown` hook (or inline `useEffect` + `setInterval`) updates a `hh:mm:ss` string every second.
-* Display: `Next song in 04:22:15`.
-
-**Solution (version number):**
-
-* Source the version from `package.json`. In Vite this can be done via `import.meta.env` by adding a `define` block to `vite.config.ts`: `__APP_VERSION__: JSON.stringify(process.env.npm_package_version)`, and declaring `declare const __APP_VERSION__: string` in `vite-env.d.ts`.
-* Display `v{__APP_VERSION__}` in the footer alongside the countdown, styled in muted grey.
-* Increment `version` in `package.json` as part of each deploy (`npm version patch` before `npm run deploy`).
-
----
-
-### 12.6 — Previous Puzzle Archive
-
-**Problem:** Users can only play today's puzzle. There is no way to go back and play missed days.
-
-**Solution:** Allow the user to navigate to any past day's puzzle via a date selector in the UI.
-
-#### URL / Routing
-
-* No router library is needed. Use the query string: `?day=3` to indicate a specific day number.
-* On load, read `new URLSearchParams(window.location.search).get('day')`. If present and valid (integer ≥ 1, ≤ today's day number), use that day; otherwise fall back to today.
-* The active day number is held in a `selectedDay` state in `App.tsx` (or derived inside `useGameState`).
-* Navigating to a past puzzle does **not** affect the tab-focus date-change reload — that only fires if `selectedDay` is today.
-
-#### Puzzle & State Loading
-
-* `getDailyPuzzle` already accepts any date string, so computing the puzzle for a past day requires only converting the day number back to a date string (inverse of `getDayNumber`).
-* Add a helper `getDateForDay(dayNumber: number): string` to `puzzle.ts`.
-* `storage.ts` currently uses a single key `songguess-state`. Change `loadGameState` / `saveGameState` to accept the date string and key each entry as `kclip-state-{YYYY-MM-DD}`.
-  * Today's existing key (`songguess-state`) should be **migrated** on first load: if the new key is empty but the old key has valid data for today, copy it to the new key and remove the old one.
-* Past puzzles are fully playable and their state persists independently.
-
-#### UI — Day Navigation
-
-* Add **‹** (previous) and **›** (next) arrow buttons flanking the `Day #N` text in the header.
-* The **›** button is disabled when viewing today's puzzle.
-* The **‹** button is disabled when `selectedDay === 1` (the first ever puzzle).
-* Clicking an arrow updates `selectedDay`, rewrites the URL query string with `history.replaceState`, and loads the corresponding puzzle + saved state.
-* When viewing a past puzzle, show a subtle banner below the header: `📅 Day #N — {YYYY-MM-DD}` so the user knows they are not on today's puzzle.
-* The audio player, guess input, clip indicator, guess history, and result screen all work identically for past puzzles.
-
-#### Constraints
-
-* Past puzzles are playable but the tab-focus reload only triggers for today's puzzle. Navigating to an archive day while the tab is in the background and midnight passes should not cause a reload.
-* The `useCountdown` footer is always based on real-time and is not affected by which day is selected.
-* Do not expose a full calendar or date-picker UI — simple prev/next arrows are sufficient.
+*No planned changes currently scoped.*
 
 ---
 

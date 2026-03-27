@@ -6,7 +6,8 @@ import { SongSearch } from './components/SongSearch'
 import { GuessHistory } from './components/GuessHistory'
 import { ResultScreen } from './components/ResultScreen'
 import { HowToPlay } from './components/HowToPlay'
-import { CLIP_DURATIONS } from './types'
+import { StatsModal } from './components/StatsModal'
+import { CLIP_DURATIONS, DistributionKey } from './types'
 import { getTodayAEST, getDayNumber, getDateForDay } from './utils/puzzle'
 import songs from './data/songs'
 
@@ -31,10 +32,19 @@ function App() {
     submitGuess,
     skipGuess,
     justWon,
+    stats,
   } = useGameState(selectedDate)
 
   const [howToPlayOpen, setHowToPlayOpen] = useState(false)
+  const [statsOpen, setStatsOpen] = useState(false)
   const countdown = useCountdown()
+
+  const lastResultKey: DistributionKey | null =
+    selectedDay === todayDayNumber && gameState.status !== 'playing'
+      ? gameState.status === 'won'
+        ? (String(gameState.guesses.length) as DistributionKey)
+        : 'X'
+      : null
 
   function navigate(day: number) {
     setSelectedDay(day)
@@ -59,6 +69,13 @@ function App() {
           aria-label="How to play"
         >
           ℹ️
+        </button>
+        <button
+          onClick={() => setStatsOpen(true)}
+          className="text-gray-400 hover:text-white text-xl leading-none"
+          aria-label="View statistics"
+        >
+          📊
         </button>
       </div>
       <div className="flex items-center gap-3 mb-2">
@@ -85,6 +102,12 @@ function App() {
       )}
 
       <HowToPlay isOpen={howToPlayOpen} onClose={() => setHowToPlayOpen(false)} />
+      <StatsModal
+        stats={stats}
+        isOpen={statsOpen}
+        onClose={() => setStatsOpen(false)}
+        lastResultKey={lastResultKey}
+      />
 
       {/* Clip progress */}
       <div className="flex gap-2 mb-6">

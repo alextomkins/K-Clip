@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { GameState, Guess, GuessResult, DailyPuzzle, MAX_GUESSES, CLIP_DURATIONS } from '../types'
-import { getTodayAEST, getDailyPuzzle } from '../utils/puzzle'
-import { loadGameState, saveGameState } from '../utils/storage'
+import { GameState, Guess, GuessResult, DailyPuzzle, MAX_GUESSES, CLIP_DURATIONS, StatsRecord, DistributionKey } from '../types'
+import { getTodayAEST, getDailyPuzzle, getDayNumber } from '../utils/puzzle'
+import { loadGameState, saveGameState, loadStats, saveStats } from '../utils/storage'
 import songs from '../data/songs'
 
 function createInitialState(date: string): GameState {
@@ -19,6 +19,19 @@ export function useGameState(date: string) {
 
   const [justWon, setJustWon] = useState(false)
 
+  const [stats, setStats] = useState<StatsRecord>(() => {
+    const loaded = loadStats()
+    if (loaded.lastPlayedDate !== null) {
+      const days = getDayNumber(today) - getDayNumber(loaded.lastPlayedDate)
+      if (days > 1) {
+        const reset = { ...loaded, currentStreak: 0 }
+        saveStats(reset)
+        return reset
+      }
+    }
+    return loaded
+  })
+
   // Reset state when the selected date changes
   useEffect(() => {
     setGameState(loadGameState(date) ?? createInitialState(date))
@@ -34,6 +47,50 @@ export function useGameState(date: string) {
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
   }, [today, isToday])
+
+  // Update stats when today's game ends
+  useEffect(() => {
+    if (!isToday) return
+    if (gameState.status === 'playing') return
+
+    setStats((prev) => {
+      if (prev.lastPlayedDate === today) return prev
+
+      const isWin = gameState.status === 'won'
+      const guessCount = gameState.guesses.length
+      const distKey: DistributionKey = isWin
+        ? (String(guessCount) as '1' | '2' | '3' | '4' | '5' | '6')
+        : 'X'
+
+      const daysBetween = prev.lastPlayedDate
+        ? getDayNumber(today) - getDayNumber(prev.lastPlayedDate)
+        : null
+
+      let newStreak: number
+      if (!isWin) {
+        newStreak = 0
+      } else if (daysBetween === null || daysBetween > 1) {
+        newStreak = 1
+      } else {
+        newStreak = prev.currentStreak + 1
+      }
+
+      const newStats: StatsRecord = {
+        played: prev.played + 1,
+        wins: prev.wins + (isWin ? 1 : 0),
+        currentStreak: newStreak,
+        maxStreak: Math.max(prev.maxStreak, newStreak),
+        guessDistribution: {
+          ...prev.guessDistribution,
+          [distKey]: prev.guessDistribution[distKey] + 1,
+        },
+        lastPlayedDate: today,
+        lastWonDate: isWin ? today : prev.lastWonDate,
+      }
+      saveStats(newStats)
+      return newStats
+    })
+  }, [gameState, isToday, today])
 
   const currentClipIndex =
     gameState.status === 'won'
@@ -81,5 +138,6 @@ export function useGameState(date: string) {
     submitGuess,
     skipGuess,
     justWon,
+    stats,
   }
 }

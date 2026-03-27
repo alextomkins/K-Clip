@@ -33,3 +33,15 @@ export interface DailyPuzzle {
 
 export const CLIP_DURATIONS = [1, 2, 5, 10, 20, 30] as const
 export const MAX_GUESSES = 6
+
+export type DistributionKey = '1' | '2' | '3' | '4' | '5' | '6' | 'X'
+
+export interface StatsRecord {
+  played: number
+  wins: number
+  currentStreak: number
+  maxStreak: number
+  guessDistribution: Record<DistributionKey, number>
+  lastPlayedDate: string | null
+  lastWonDate: string | null
+}
