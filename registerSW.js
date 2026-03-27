@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/K-Clip/sw.js', { scope: '/K-Clip/' })})}
