@@ -245,6 +245,9 @@ These are **explicitly NOT required now**, but should influence design decisions
 * Multiple difficulty modes
 * Leaderboards or social features
 * Obfuscation or protection of answers
+* **CI/CD & Branching Strategy** — Move away from pushing directly to `main`. Adopt a branching model (e.g. feature branches with PRs) and set up a CI/CD pipeline to automate linting, testing, and deployment.
+* **Unit Testing** — Add unit test coverage across utility functions, hooks, and components (e.g. with Vitest + React Testing Library).
+* **End-to-End Testing** — Introduce Playwright for E2E tests covering core user flows (daily puzzle play, guess submission, result sharing, archive navigation).
 
 ---
 
