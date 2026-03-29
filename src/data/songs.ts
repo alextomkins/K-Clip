@@ -216,3 +216,5 @@ const songs: Song[] = songEntries
   })
 
 export default songs
+
+export const songLookup: Map<string, Song> = new Map(songs.map((s) => [s.id, s]))

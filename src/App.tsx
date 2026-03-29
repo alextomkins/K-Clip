@@ -154,7 +154,7 @@ function App() {
 
       {/* Guess history */}
       <div className="mt-2 w-full flex justify-center">
-        <GuessHistory guesses={gameState.guesses} songs={songs} />
+        <GuessHistory guesses={gameState.guesses} />
       </div>
 
       <footer className="mt-auto pt-8 mb-4 text-gray-500 text-xs text-center space-y-1">

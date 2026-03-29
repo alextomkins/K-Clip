@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
+import { AEST_OFFSET_MS } from '../types'
 
 function getTimeUntilMidnightAEST(): number {
-  const aestOffset = 10 * 60 * 60 * 1000 // UTC+10 in ms
-  const nowAEST = Date.now() + aestOffset
+  const nowAEST = Date.now() + AEST_OFFSET_MS
   const msPerDay = 24 * 60 * 60 * 1000
   const midnightAEST = Math.ceil(nowAEST / msPerDay) * msPerDay
   return midnightAEST - nowAEST

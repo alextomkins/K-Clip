@@ -1,8 +1,10 @@
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import { GameState, Guess, GuessResult, DailyPuzzle, MAX_GUESSES, CLIP_DURATIONS, StatsRecord, DistributionKey } from '../types'
-import { getTodayAEST, getDailyPuzzle, getDayNumber } from '../utils/puzzle'
-import { loadGameState, saveGameState, loadStats, saveStats } from '../utils/storage'
-import songs from '../data/songs'
+import { GameState, Guess, GuessResult, DailyPuzzle, MAX_GUESSES, CLIP_DURATIONS } from '../types'
+import { getTodayAEST, getDailyPuzzle } from '../utils/puzzle'
+import { loadGameState, saveGameState } from '../utils/storage'
+import { useStats } from './useStats'
+import { useDateReload } from './useDateReload'
+import { songLookup } from '../data/songs'
 
 function createInitialState(date: string): GameState {
   return { date, guesses: [], status: 'playing' }
@@ -19,78 +21,14 @@ export function useGameState(date: string) {
 
   const [justWon, setJustWon] = useState(false)
 
-  const [stats, setStats] = useState<StatsRecord>(() => {
-    const loaded = loadStats()
-    if (loaded.lastPlayedDate !== null) {
-      const days = getDayNumber(today) - getDayNumber(loaded.lastPlayedDate)
-      if (days > 1) {
-        const reset = { ...loaded, currentStreak: 0 }
-        saveStats(reset)
-        return reset
-      }
-    }
-    return loaded
-  })
+  const stats = useStats(date, gameState)
+  useDateReload(isToday)
 
   // Reset state when the selected date changes
   useEffect(() => {
     setGameState(loadGameState(date) ?? createInitialState(date))
     setJustWon(false)
   }, [date])
-
-  // Reload if the real date changes while the tab is open — only when viewing today's puzzle
-  useEffect(() => {
-    if (!isToday) return
-    const onFocus = () => {
-      if (getTodayAEST() !== today) window.location.reload()
-    }
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
-  }, [today, isToday])
-
-  // Update stats when today's game ends
-  useEffect(() => {
-    if (!isToday) return
-    if (gameState.status === 'playing') return
-
-    setStats((prev) => {
-      if (prev.lastPlayedDate === today) return prev
-
-      const isWin = gameState.status === 'won'
-      const guessCount = gameState.guesses.length
-      const distKey: DistributionKey = isWin
-        ? (String(guessCount) as '1' | '2' | '3' | '4' | '5' | '6')
-        : 'X'
-
-      const daysBetween = prev.lastPlayedDate
-        ? getDayNumber(today) - getDayNumber(prev.lastPlayedDate)
-        : null
-
-      let newStreak: number
-      if (!isWin) {
-        newStreak = 0
-      } else if (daysBetween === null || daysBetween > 1) {
-        newStreak = 1
-      } else {
-        newStreak = prev.currentStreak + 1
-      }
-
-      const newStats: StatsRecord = {
-        played: prev.played + 1,
-        wins: prev.wins + (isWin ? 1 : 0),
-        currentStreak: newStreak,
-        maxStreak: Math.max(prev.maxStreak, newStreak),
-        guessDistribution: {
-          ...prev.guessDistribution,
-          [distKey]: prev.guessDistribution[distKey] + 1,
-        },
-        lastPlayedDate: today,
-        lastWonDate: isWin ? today : prev.lastWonDate,
-      }
-      saveStats(newStats)
-      return newStats
-    })
-  }, [gameState, isToday, today])
 
   const currentClipIndex =
     gameState.status === 'won'
@@ -99,18 +37,20 @@ export function useGameState(date: string) {
   const attemptsRemaining = MAX_GUESSES - gameState.guesses.length
 
   const applyGuess = useCallback((guess: Guess) => {
-    if (gameState.status !== 'playing') return
-    const newGuesses = [...gameState.guesses, guess]
-    const isLastGuess = newGuesses.length >= MAX_GUESSES
-    const newState: GameState = {
-      ...gameState,
-      guesses: newGuesses,
-      status: guess.result === 'correct' ? 'won' : isLastGuess ? 'lost' : 'playing',
-    }
+    setGameState((prev) => {
+      if (prev.status !== 'playing') return prev
+      const newGuesses = [...prev.guesses, guess]
+      const isLastGuess = newGuesses.length >= MAX_GUESSES
+      const newState: GameState = {
+        ...prev,
+        guesses: newGuesses,
+        status: guess.result === 'correct' ? 'won' : isLastGuess ? 'lost' : 'playing',
+      }
+      saveGameState(newState)
+      return newState
+    })
     if (guess.result === 'correct') setJustWon(true)
-    setGameState(newState)
-    saveGameState(newState)
-  }, [gameState])
+  }, [])
 
   const submitGuess = useCallback((songId: string) => {
     const isCorrect = songId === puzzle.song.id
@@ -118,7 +58,7 @@ export function useGameState(date: string) {
     if (isCorrect) {
       result = 'correct'
     } else {
-      const guessedSong = songs.find((s) => s.id === songId)
+      const guessedSong = songLookup.get(songId)
       if (guessedSong && guessedSong.artist === puzzle.song.artist) {
         result = 'partial'
       }

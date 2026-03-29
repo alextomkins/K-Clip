@@ -1,16 +1,16 @@
-import { Guess, Song, RESULT_EMOJI } from '../types'
+import { Guess, RESULT_EMOJI } from '../types'
+import { songLookup } from '../data/songs'
 
 interface GuessHistoryProps {
   guesses: Guess[]
-  songs: Song[]
 }
 
-function getSongLabel(songId: string, songs: Song[]): string {
-  const song = songs.find((s) => s.id === songId)
+function getSongLabel(songId: string): string {
+  const song = songLookup.get(songId)
   return song ? `${song.title} — ${song.artist}` : songId
 }
 
-export function GuessHistory({ guesses, songs }: GuessHistoryProps) {
+export function GuessHistory({ guesses }: GuessHistoryProps) {
   if (guesses.length === 0) return null
 
   return (
@@ -36,7 +36,7 @@ export function GuessHistory({ guesses, songs }: GuessHistoryProps) {
             ) : (
               <>
                 <span>{RESULT_EMOJI[g.result]}</span>
-                <span>{getSongLabel(g.songId, songs)}</span>
+                <span>{getSongLabel(g.songId)}</span>
               </>
             )}
           </div>
