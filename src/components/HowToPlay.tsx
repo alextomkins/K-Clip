@@ -12,6 +12,8 @@ export function HowToPlay({ isOpen, onClose }: HowToPlayProps) {
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         className="bg-gray-800 rounded-xl w-full max-w-sm p-6 relative"
         onClick={(e) => e.stopPropagation()}
       >
