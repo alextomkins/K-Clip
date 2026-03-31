@@ -1,10 +1,9 @@
-import { DailyPuzzle } from '../types'
+import { DailyPuzzle, AEST_OFFSET_MS } from '../types'
 import songs from '../data/songs'
 
 /** Epoch date for day numbering (2026-03-22 AEST = Day 1) */
 const EPOCH = Date.UTC(2026, 2, 21)
 const MS_PER_DAY = 86_400_000
-const AEST_OFFSET_MS = 10 * 60 * 60 * 1000
 
 /**
  * Simple seeded PRNG (mulberry32).

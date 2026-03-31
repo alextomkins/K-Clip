@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Song } from '../types'
 
 interface SongSearchProps {
@@ -16,14 +16,20 @@ export function SongSearch({ songs, onGuess, onSkip, guessedSongIds }: SongSearc
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
 
-  const availableSongs = songs.filter((s) => !guessedSongIds.includes(s.id))
+  const availableSongs = useMemo(
+    () => songs.filter((s) => !guessedSongIds.includes(s.id)),
+    [songs, guessedSongIds]
+  )
 
-  const filtered = query.trim() && !selectedSong
-    ? availableSongs.filter((s) => {
-        const q = query.toLowerCase()
-        return s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q)
-      })
-    : availableSongs
+  const filtered = useMemo(
+    () => query.trim() && !selectedSong
+      ? availableSongs.filter((s) => {
+          const q = query.toLowerCase()
+          return s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q)
+        })
+      : availableSongs,
+    [query, selectedSong, availableSongs]
+  )
 
   // Scroll highlighted item into view
   useEffect(() => {

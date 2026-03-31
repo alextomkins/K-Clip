@@ -33,6 +33,7 @@ export interface DailyPuzzle {
 
 export const CLIP_DURATIONS = [1, 2, 5, 10, 20, 30] as const
 export const MAX_GUESSES = 6
+export const AEST_OFFSET_MS = 10 * 60 * 60 * 1000
 
 export type DistributionKey = '1' | '2' | '3' | '4' | '5' | '6' | 'X'
 
