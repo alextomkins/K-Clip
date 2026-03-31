@@ -13,7 +13,7 @@ export function generateShareText(gameState: GameState, puzzle: DailyPuzzle): st
     padded,
     `Guessed in ${score}`,
     '',
-    'alextomkins.github.io/K-Clip/ 🎵',
+    'https://alextomkins.github.io/K-Clip/ 🎵',
   ].join('\n')
 }
 
