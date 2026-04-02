@@ -270,7 +270,7 @@ When modifying or extending this project:
 
 ### Firebase Integration (branch: `feature/firebase-integration`)
 
-Migration of audio files from `public/audio/` in the repository to Firebase Storage, laying the groundwork for future Firebase Auth / user accounts.
+Migration of audio files from `public/audio/` in the repository to Firebase Storage, laying the groundwork for future Firebase Auth / user accounts
 
 #### Phase 1 — Firebase Project Setup *(manual, no code changes)*
 
