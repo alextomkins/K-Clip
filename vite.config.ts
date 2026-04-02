@@ -18,7 +18,7 @@ export default defineConfig({
             urlPattern: /\/audio\/.*\.mp3$/,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'kclip-audio',
+              cacheName: `kclip-audio-v${version}`,
               expiration: {
                 maxEntries: 100,
               },
