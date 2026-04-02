@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useGameState } from './hooks/useGameState'
 import { useCountdown } from './hooks/useCountdown'
 import { AudioPlayer } from './components/AudioPlayer'
@@ -10,6 +10,7 @@ import { StatsModal } from './components/StatsModal'
 import { CLIP_DURATIONS, DistributionKey } from './types'
 import { getTodayAEST, getDayNumber, getDateForDay } from './utils/puzzle'
 import songs from './data/songs'
+import { getAudioUrl } from './lib/storage'
 
 function App() {
   const todayDayNumber = useMemo(() => getDayNumber(getTodayAEST()), [])
@@ -57,7 +58,11 @@ function App() {
     .filter((g) => g.result !== 'skipped')
     .map((g) => g.songId)
 
-  const audioSrc = `${import.meta.env.BASE_URL}audio/${puzzle.song.audioFile}`
+  const [audioSrc, setAudioSrc] = useState<string | null>(null)
+  useEffect(() => {
+    setAudioSrc(null)
+    getAudioUrl(puzzle.song.audioFile).then(setAudioSrc)
+  }, [puzzle.song.audioFile])
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center p-4">
