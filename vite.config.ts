@@ -15,10 +15,10 @@ export default defineConfig({
         runtimeCaching: [
           {
             // Cache audio files on first play, serve from cache thereafter
-            urlPattern: /\/audio\/.*\.mp3$/,
+            urlPattern: /firebasestorage\.googleapis\.com\/.*\.mp3/,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'kclip-audio',
+              cacheName: `kclip-audio-v${version}`,
               expiration: {
                 maxEntries: 100,
               },
