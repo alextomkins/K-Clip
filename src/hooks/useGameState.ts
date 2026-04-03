@@ -1,10 +1,11 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { GameState, Guess, GuessResult, DailyPuzzle, MAX_GUESSES, CLIP_DURATIONS } from '../types'
 import { getTodayAEST, getDailyPuzzle } from '../utils/puzzle'
 import { loadGameState, saveGameState } from '../utils/storage'
 import { useStats } from './useStats'
 import { useDateReload } from './useDateReload'
 import { songLookup } from '../data/songs'
+import { logGameStart, logGuess, logGameEnd } from '../lib/analytics'
 
 function createInitialState(date: string): GameState {
   return { date, guesses: [], status: 'playing' }
@@ -30,6 +31,15 @@ export function useGameState(date: string) {
     setJustWon(false)
   }, [date])
 
+  // Log game_start when a fresh puzzle is opened
+  const loggedStart = useRef<string | null>(null)
+  useEffect(() => {
+    if (gameState.status === 'playing' && gameState.guesses.length === 0 && loggedStart.current !== date) {
+      loggedStart.current = date
+      logGameStart(puzzle.dayNumber, date)
+    }
+  }, [date, gameState.status, gameState.guesses.length, puzzle.dayNumber])
+
   const currentClipIndex =
     gameState.status === 'won'
       ? Math.min(gameState.guesses.length - 1, CLIP_DURATIONS.length - 1)
@@ -51,6 +61,20 @@ export function useGameState(date: string) {
     })
     if (guess.result === 'correct') setJustWon(true)
   }, [])
+
+  // Log guess and game_end events
+  const prevGuessCount = useRef(gameState.guesses.length)
+  useEffect(() => {
+    const count = gameState.guesses.length
+    if (count > prevGuessCount.current) {
+      const latest = gameState.guesses[count - 1]
+      logGuess(puzzle.dayNumber, count, latest.result)
+      if (gameState.status === 'won' || gameState.status === 'lost') {
+        logGameEnd(puzzle.dayNumber, gameState.status, count)
+      }
+    }
+    prevGuessCount.current = count
+  }, [gameState.guesses, gameState.status, puzzle.dayNumber])
 
   const submitGuess = useCallback((songId: string) => {
     const isCorrect = songId === puzzle.song.id

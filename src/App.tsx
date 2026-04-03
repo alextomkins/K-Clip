@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useGameState } from './hooks/useGameState'
 import { useCountdown } from './hooks/useCountdown'
+import { useAuthContext } from './contexts/AuthContext'
 import { AudioPlayer } from './components/AudioPlayer'
 import { SongSearch } from './components/SongSearch'
 import { GuessHistory } from './components/GuessHistory'
@@ -13,6 +14,7 @@ import songs from './data/songs'
 import { getAudioUrl } from './lib/storage'
 
 function App() {
+  const { user, loading: authLoading, signIn, signOut } = useAuthContext()
   const todayDayNumber = useMemo(() => getDayNumber(getTodayAEST()), [])
 
   const [selectedDay, setSelectedDay] = useState(() => {
@@ -38,7 +40,21 @@ function App() {
 
   const [howToPlayOpen, setHowToPlayOpen] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
   const countdown = useCountdown()
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    if (userMenuOpen) {
+      document.addEventListener('mousedown', handleClick)
+      return () => document.removeEventListener('mousedown', handleClick)
+    }
+  }, [userMenuOpen])
 
   const lastResultKey: DistributionKey | null =
     selectedDay === todayDayNumber && gameState.status !== 'playing'
@@ -82,6 +98,50 @@ function App() {
         >
           📊
         </button>
+        {!authLoading && (
+          user ? (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen((v) => !v)}
+                className="flex items-center leading-none"
+                aria-label="User menu"
+              >
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt=""
+                    className="w-7 h-7 rounded-full"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <span className="w-7 h-7 rounded-full bg-green-600 flex items-center justify-center text-xs font-bold">
+                    {user.displayName?.[0] ?? '?'}
+                  </span>
+                )}
+              </button>
+              {userMenuOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50 py-1">
+                  <p className="px-3 py-1.5 text-xs text-gray-400 truncate">{user.displayName ?? user.email}</p>
+                  <hr className="border-gray-700" />
+                  <button
+                    onClick={() => { setUserMenuOpen(false); signOut() }}
+                    className="w-full text-left px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={signIn}
+              className="text-gray-400 hover:text-white text-xl leading-none"
+              aria-label="Sign in"
+            >
+              👤
+            </button>
+          )
+        )}
       </div>
       <div className="flex items-center gap-3 mb-2">
         <button

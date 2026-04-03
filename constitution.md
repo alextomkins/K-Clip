@@ -190,8 +190,8 @@ Persistence:
 
 ### Static-First Architecture
 
-* No backend required initially
-* All logic should run client-side
+* Frontend is static (GitHub Pages); backend logic limited to Firebase services
+* All game logic runs client-side; Cloud Functions handle aggregation only
 
 ### Deterministic Daily Puzzle
 
@@ -225,19 +225,35 @@ These are intentional decisions for this project:
 
   * Audio licensing (private use only)
   * Users inspecting frontend code to find answers
-* No backend security or protection mechanisms
+* No backend security or protection mechanisms beyond Firestore security rules
 
 ---
 
-## 10. Future Considerations (Not in Scope Yet)
+## 10. Planned: Auth & Cloud Data (see `firebase-auth-plan.md`)
+
+The following features are **in scope** and planned for implementation:
+
+* **Firebase Authentication** — Google Sign-In on the client (optional; game remains playable without signing in)
+* **ASP.NET Web API on Cloud Run** — C# backend handling all data operations, deployed as a Docker container on GCP Cloud Run (free tier)
+* **Cloud Firestore** — Data store accessed server-side only (via `Google.Cloud.Firestore` SDK); all client access goes through the API
+* **Cross-device sync** — Game state and stats persisted via the API; localStorage as cache/fallback
+* **Daily average guesses** — Server-side aggregation showing community stats (average guesses, total players) on the result screen
+* **Leaderboard** — All-time player rankings computed server-side with LINQ, served via API endpoint
+* **Repository pattern** — `IGameRepository` interface enables future migration from Firestore to SQL with zero API/client changes
+* **localStorage migration** — One-time migration of existing local data to the API on first sign-in
+* **No Cloud Functions** — The ASP.NET API handles all server-side logic
+
+Full design details are in [`firebase-auth-plan.md`](firebase-auth-plan.md).
+
+---
+
+## 11. Future Considerations (Not in Scope Yet)
 
 These are **explicitly NOT required now**, but should influence design decisions:
 
-* User accounts / authentication
 * Song database management
 * Admin tools for adding songs
 * Multiple difficulty modes
-* Leaderboards or social features
 * Obfuscation or protection of answers
 * **CI/CD & Branching Strategy** — Move away from pushing directly to `main`. Adopt a branching model (e.g. feature branches with PRs) and set up a CI/CD pipeline to automate linting, testing, and deployment.
 * **Unit Testing** — Add unit test coverage across utility functions, hooks, and components (e.g. with Vitest + React Testing Library).
@@ -245,7 +261,7 @@ These are **explicitly NOT required now**, but should influence design decisions
 
 ---
 
-## 11. AI Agent Guidelines
+## 12. AI Agent Guidelines
 
 When modifying or extending this project:
 
@@ -260,13 +276,13 @@ When modifying or extending this project:
 
 ---
 
-## 12. Open Questions / To Be Defined
+## 13. Open Questions / To Be Defined
 
 *All previously open questions have been resolved and documented above.*
 
 ---
 
-## 13. Versioning Philosophy
+## 14. Versioning Philosophy
 
 * Start minimal and iterate
 * Avoid premature scaling decisions
@@ -274,7 +290,7 @@ When modifying or extending this project:
 
 ---
 
-## 14. Definition of Done (MVP)
+## 15. Definition of Done (MVP)
 
 The MVP is complete when:
 

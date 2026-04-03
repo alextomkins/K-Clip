@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import confetti from 'canvas-confetti'
 import { GameState, DailyPuzzle } from '../types'
 import { generateShareText, copyToClipboard } from '../utils/share'
+import { logShare } from '../lib/analytics'
 
 interface ResultScreenProps {
   gameState: GameState
@@ -27,6 +28,7 @@ export function ResultScreen({ gameState, puzzle, justWon }: ResultScreenProps) 
     const text = generateShareText(gameState, puzzle)
     const success = await copyToClipboard(text)
     if (success) {
+      logShare(puzzle.dayNumber)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     }
