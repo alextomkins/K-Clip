@@ -86,12 +86,14 @@ alextomkins.github.io/K-Clip/ 🎵
 * Deployment: `gh-pages` package (`npm run deploy`)
 * App type: Fully static frontend (no backend)
 
-### Audio Handling (Current)
+### Audio Handling
 
-* Audio files are stored in `public/audio/` in the repository
+* Audio files are stored in **Firebase Storage** under an `/audio/` folder
 * Each song has a **single 30-second MP3 file**
 * Clips are generated client-side by controlling playback timing
 * File naming convention: `{artist-slug}-{song-slug}.mp3` (e.g. `aespa-black-mamba.mp3`)
+* Download URLs are fetched at runtime via `getAudioUrl()` in `src/lib/storage.ts`
+* Firebase app is initialised in `src/lib/firebase.ts` using `VITE_FIREBASE_*` env vars (see `.env.example`)
 * Playback volume is set to **0.7** by default via the `volume` prop on `useAudioPlayer`
 
 ### UI Features
@@ -101,14 +103,6 @@ alextomkins.github.io/K-Clip/ 🎵
 * **Footer** — displayed below the guess history:
   * `Next song in hh:mm:ss` — live countdown to 00:00 AEST, driven by the `useCountdown` hook.
   * `v{version}` — sourced from `package.json` via Vite's `define` (`__APP_VERSION__`), declared in `vite-env.d.ts`.
-
-### Audio Handling (Future)
-
-* Audio files will be fetched from blob storage (e.g. AWS S3)
-* Must support:
-
-  * Streaming or partial playback
-  * Efficient loading (avoid downloading full files unnecessarily)
 
 ---
 
@@ -171,7 +165,7 @@ Persistence:
 ### Song List
 
 * Defined as a static TypeScript array in `src/data/songs.ts`
-* Currently contains **157 K-pop tracks** across ~30 artists
+* Currently contains **145 K-pop tracks** across ~30 artists
 * Entries specify `title` and `artist`; `id` and `audioFile` are auto-generated:
 
   * ID: `{artist-slug}-{title-slug}` (e.g. `ikon-killing-me`)
@@ -266,76 +260,13 @@ When modifying or extending this project:
 
 ---
 
-## 12. Planned Changes
-
-### Firebase Integration (branch: `feature/firebase-integration`)
-
-Migration of audio files from `public/audio/` in the repository to Firebase Storage, laying the groundwork for future Firebase Auth / user accounts
-
-#### Phase 1 — Firebase Project Setup *(manual, no code changes)*
-
-* Create a Firebase project at console.firebase.google.com
-* Enable **Firebase Storage** (production mode)
-* Add `alextomkins.github.io` to **Authentication → Settings → Authorised domains**
-* Install the Firebase CLI: `npm install -g firebase-tools`
-* Configure **Storage CORS** via a `cors.json` applied with `gsutil` to allow requests from the GitHub Pages domain
-* Write **Storage Security Rules** — public read on all audio files, block all writes
-
-#### Phase 2 — Install SDK & Firebase Config
-
-* Install `firebase` package: `npm install firebase`
-* Create `src/lib/firebase.ts` — initialise the Firebase app using `VITE_FIREBASE_*` env vars
-* Add `.env.local` with Firebase project config values (gitignored)
-* Add `.env.example` documenting the required env vars
-
-#### Phase 3 — Upload Audio Files to Firebase Storage *(manual)*
-
-* Upload all files from `public/audio/` to an `/audio/` folder in Firebase Storage
-* Naming convention stays identical: `{artist-slug}-{song-slug}.mp3`
-* Verify a test file is accessible via its public download URL
-
-#### Phase 4 — Wire Firebase Storage URLs into the App
-
-* Create `src/lib/storage.ts` — export a `getAudioUrl(audioFile: string): string` helper that returns the Firebase Storage download URL
-* Update `src/App.tsx` — replace the single `BASE_URL`-based `audioSrc` line with a call to `getAudioUrl()`
-* No changes needed to `useAudioPlayer.ts` or `songs.ts`
-
-#### Phase 5 — Test & Validate
-
-* Test locally against the live Firebase Storage bucket
-* Verify playback works across all 6 clip durations
-* Verify correct CORS headers are returned
-* Test on mobile (Safari iOS + Chrome Android)
-* Confirm no regressions in game logic
-
-#### Phase 6 — Cleanup
-
-* Remove audio files from `public/audio/` (reduces repo size)
-* Update `constitution.md` — revise "Audio Handling (Current)" section to reflect Firebase Storage
-* Deploy: `npm run deploy`
-
-#### Files Changed
-
-| File | Change |
-| --- | --- |
-| `src/lib/firebase.ts` | New — Firebase app init |
-| `src/lib/storage.ts` | New — `getAudioUrl()` helper |
-| `src/App.tsx` | 1-line change — swap audio URL source |
-| `.env.local` | New — local Firebase config (gitignored) |
-| `.env.example` | New — documents required env vars |
-| `public/audio/` | Deleted after Phase 6 |
-| `constitution.md` | Updated to reflect new architecture |
-| `package.json` | `firebase` added as dependency |
-
----
-
-## 13. Open Questions / To Be Defined
+## 12. Open Questions / To Be Defined
 
 *All previously open questions have been resolved and documented above.*
 
 ---
 
-## 14. Versioning Philosophy
+## 13. Versioning Philosophy
 
 * Start minimal and iterate
 * Avoid premature scaling decisions
@@ -343,7 +274,7 @@ Migration of audio files from `public/audio/` in the repository to Firebase Stor
 
 ---
 
-## 15. Definition of Done (MVP)
+## 14. Definition of Done (MVP)
 
 The MVP is complete when:
 

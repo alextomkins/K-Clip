@@ -34,7 +34,7 @@ alextomkins.github.io/K-Clip/ 🎵
 
 ## Features
 
-- 🎶 **143 K-pop tracks** across ~30 artists
+- 🎶 **145 K-pop tracks** across ~30 artists
 - 📅 **New puzzle every day** at midnight AEST
 - 🗂️ **Puzzle archive** — browse and play any past day
 - 📊 **Stats tracking** — win %, streaks, guess distribution
@@ -47,6 +47,7 @@ alextomkins.github.io/K-Clip/ 🎵
 - **React 19** + **TypeScript 5**
 - **Vite** for builds
 - **Tailwind CSS 3** for styling
+- **Firebase Storage** for audio hosting
 - **GitHub Pages** for hosting
 
 ## Development
@@ -75,10 +76,10 @@ src/
   components/    # React UI components
   data/          # Song list
   hooks/         # Custom React hooks (audio, game state, countdown)
+  lib/           # Firebase init & storage helpers
   types/         # TypeScript type definitions
   utils/         # Puzzle selection, sharing, localStorage
-public/
-  audio/         # 30-second MP3 clips
+public/          # Static assets (icons, favicon)
 ```
 
 ## License
