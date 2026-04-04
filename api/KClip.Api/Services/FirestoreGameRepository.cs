@@ -48,8 +48,6 @@ public class FirestoreGameRepository : IGameRepository
 
     public async Task SaveStats(string uid, StatsRecord stats)
     {
-        // Ensure parent user document exists so GetAllUserStats can discover this user
-        await EnsureUserDocExists(uid);
         await _db.Collection("users").Document(uid)
             .Collection("data").Document("stats")
             .SetAsync(stats);
@@ -98,7 +96,6 @@ public class FirestoreGameRepository : IGameRepository
 
     public async Task SaveProfile(string uid, UserProfile profile)
     {
-        await EnsureUserDocExists(uid);
         await _db.Collection("users").Document(uid)
             .Collection("data").Document("profile")
             .SetAsync(profile);
@@ -108,36 +105,41 @@ public class FirestoreGameRepository : IGameRepository
 
     public async Task<List<(string Uid, StatsRecord Stats, UserProfile? Profile)>> GetAllUserStats()
     {
-        var usersSnapshot = await _db.Collection("users").GetSnapshotAsync();
-        var results = new List<(string, StatsRecord, UserProfile?)>();
+        // Use CollectionGroup to find all "stats" docs under users/{uid}/data/stats.
+        // This avoids relying on the parent users/{uid} document existing.
+        var statsSnapshots = await _db.CollectionGroup("data").GetSnapshotAsync();
+        var userIds = new HashSet<string>();
+        var statsByUid = new Dictionary<string, StatsRecord>();
+        var profilesByUid = new Dictionary<string, UserProfile>();
 
-        foreach (var userDoc in usersSnapshot.Documents)
+        foreach (var doc in statsSnapshots.Documents)
         {
-            var statsDoc = await userDoc.Reference
-                .Collection("data").Document("stats").GetSnapshotAsync();
-            if (!statsDoc.Exists) continue;
+            // Path: users/{uid}/data/{docId}
+            var pathParts = doc.Reference.Path.Split('/');
+            if (pathParts.Length < 4) continue;
+            if (pathParts[^2] != "data" || pathParts[^4] != "users") continue;
+            var uid = pathParts[^3];
 
-            var stats = statsDoc.ConvertTo<StatsRecord>();
-            var profileDoc = await userDoc.Reference
-                .Collection("data").Document("profile").GetSnapshotAsync();
-            var profile = profileDoc.Exists ? profileDoc.ConvertTo<UserProfile>() : null;
+            userIds.Add(uid);
 
-            results.Add((userDoc.Id, stats, profile));
+            if (doc.Id == "stats")
+            {
+                statsByUid[uid] = doc.ConvertTo<StatsRecord>();
+            }
+            else if (doc.Id == "profile")
+            {
+                profilesByUid[uid] = doc.ConvertTo<UserProfile>();
+            }
         }
 
-        return results;
-    }
-
-    // --- Helpers ---
-
-    private async Task EnsureUserDocExists(string uid)
-    {
-        var userRef = _db.Collection("users").Document(uid);
-        var doc = await userRef.GetSnapshotAsync();
-        if (!doc.Exists)
-        {
-            await userRef.SetAsync(new Dictionary<string, object> { ["createdAt"] = FieldValue.ServerTimestamp });
-        }
+        return userIds
+            .Where(uid => statsByUid.ContainsKey(uid))
+            .Select(uid => (
+                uid,
+                statsByUid[uid],
+                profilesByUid.GetValueOrDefault(uid)
+            ))
+            .ToList();
     }
 
     // --- Account Deletion ---
