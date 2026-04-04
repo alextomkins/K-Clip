@@ -96,6 +96,9 @@ public class FirestoreGameRepository : IGameRepository
 
     public async Task SaveProfile(string uid, UserProfile profile)
     {
+        // Ensure parent user document exists so GetAllUserStats can discover this user
+        await _db.Collection("users").Document(uid).SetAsync(
+            new Dictionary<string, object>(), Google.Cloud.Firestore.SetOptions.MergeAll);
         await _db.Collection("users").Document(uid)
             .Collection("data").Document("profile")
             .SetAsync(profile);
