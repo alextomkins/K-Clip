@@ -54,3 +54,16 @@ export interface PuzzleSummary {
   winCount: number
   distribution: Record<string, number>
 }
+
+export interface LeaderboardEntry {
+  uid: string
+  displayName: string
+  photoURL: string | null
+  played: number
+  wins: number
+  winPct: number
+  currentStreak: number
+  maxStreak: number
+  avgGuesses: number
+  rank: number
+}

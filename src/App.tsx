@@ -8,6 +8,7 @@ import { GuessHistory } from './components/GuessHistory'
 import { ResultScreen } from './components/ResultScreen'
 import { HowToPlay } from './components/HowToPlay'
 import { StatsModal } from './components/StatsModal'
+import { LeaderboardModal } from './components/LeaderboardModal'
 import { CLIP_DURATIONS, DistributionKey } from './types'
 import { getTodayAEST, getDayNumber, getDateForDay } from './utils/puzzle'
 import songs from './data/songs'
@@ -41,6 +42,7 @@ function App() {
 
   const [howToPlayOpen, setHowToPlayOpen] = useState(false)
   const [statsOpen, setStatsOpen] = useState(false)
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
   const countdown = useCountdown()
@@ -99,6 +101,15 @@ function App() {
         >
           📊
         </button>
+        {user && (
+          <button
+            onClick={() => setLeaderboardOpen(true)}
+            className="text-gray-400 hover:text-white text-xl leading-none"
+            aria-label="View leaderboard"
+          >
+            🏆
+          </button>
+        )}
         {!authLoading && (
           user ? (
             <div className="relative" ref={userMenuRef}>
@@ -168,6 +179,7 @@ function App() {
       )}
 
       <HowToPlay isOpen={howToPlayOpen} onClose={() => setHowToPlayOpen(false)} />
+      <LeaderboardModal isOpen={leaderboardOpen} onClose={() => setLeaderboardOpen(false)} />
       <StatsModal
         stats={stats}
         isOpen={statsOpen}
