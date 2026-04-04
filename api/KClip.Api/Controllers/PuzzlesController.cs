@@ -18,6 +18,7 @@ public class PuzzlesController : ControllerBase
     }
 
     [HttpGet("{date}/summary")]
+    [ResponseCache(Duration = 30)]
     public async Task<ActionResult<PuzzleSummary>> GetSummary(string date)
     {
         var summary = await _repo.GetPuzzleSummary(date);

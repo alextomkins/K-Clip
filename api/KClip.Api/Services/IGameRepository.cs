@@ -25,4 +25,7 @@ public interface IGameRepository
 
     // All user stats (for leaderboard)
     Task<List<(string Uid, StatsRecord Stats, UserProfile? Profile)>> GetAllUserStats();
+
+    // Account deletion
+    Task DeleteAllUserData(string uid);
 }

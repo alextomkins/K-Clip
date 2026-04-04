@@ -50,6 +50,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddResponseCaching();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -63,6 +64,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+app.UseResponseCaching();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

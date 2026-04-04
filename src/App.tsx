@@ -9,6 +9,8 @@ import { ResultScreen } from './components/ResultScreen'
 import { HowToPlay } from './components/HowToPlay'
 import { StatsModal } from './components/StatsModal'
 import { LeaderboardModal } from './components/LeaderboardModal'
+import { useToast, ToastContainer } from './components/Toast'
+import { setApiErrorHandler, api } from './lib/api'
 import { CLIP_DURATIONS, DistributionKey } from './types'
 import { getTodayAEST, getDayNumber, getDateForDay } from './utils/puzzle'
 import songs from './data/songs'
@@ -17,7 +19,12 @@ import { getAudioUrl } from './lib/storage'
 function App() {
   const { user, loading: authLoading, signIn, signOut } = useAuthContext()
   const todayDayNumber = useMemo(() => getDayNumber(getTodayAEST()), [])
+  const { toasts, show: showToast } = useToast()
 
+  // Connect API error handler to toast system
+  useEffect(() => {
+    setApiErrorHandler((msg) => showToast(msg))
+  }, [showToast])
   const [selectedDay, setSelectedDay] = useState(() => {
     const params = new URLSearchParams(window.location.search)
     const raw = params.get('day')
@@ -141,6 +148,22 @@ function App() {
                   >
                     Sign out
                   </button>
+                  <button
+                    onClick={async () => {
+                      setUserMenuOpen(false)
+                      if (!window.confirm('Delete your account and all cloud data? This cannot be undone.')) return
+                      try {
+                        await api.delete('/api/account')
+                        await signOut()
+                        showToast('Account deleted')
+                      } catch {
+                        showToast('Failed to delete account')
+                      }
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300"
+                  >
+                    Delete account
+                  </button>
                 </div>
               )}
             </div>
@@ -240,6 +263,8 @@ function App() {
         <p>Next song in <span className="font-mono">{countdown}</span></p>
         <p>v{__APP_VERSION__}</p>
       </footer>
+
+      <ToastContainer toasts={toasts} />
     </div>
   )
 }

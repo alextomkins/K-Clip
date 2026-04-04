@@ -124,4 +124,32 @@ public class FirestoreGameRepository : IGameRepository
 
         return results;
     }
+
+    // --- Account Deletion ---
+
+    public async Task DeleteAllUserData(string uid)
+    {
+        var userRef = _db.Collection("users").Document(uid);
+
+        // Delete games subcollection
+        await DeleteCollection(userRef.Collection("games"));
+
+        // Delete data subcollection (stats, profile)
+        await DeleteCollection(userRef.Collection("data"));
+
+        // Delete the user document itself
+        await userRef.DeleteAsync();
+
+        // Note: puzzle results (puzzles/{date}/results/{uid}) are left intact
+        // to preserve aggregate puzzle summaries.
+    }
+
+    private static async Task DeleteCollection(CollectionReference collection)
+    {
+        var snapshot = await collection.GetSnapshotAsync();
+        foreach (var doc in snapshot.Documents)
+        {
+            await doc.Reference.DeleteAsync();
+        }
+    }
 }

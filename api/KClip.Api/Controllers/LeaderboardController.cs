@@ -18,6 +18,7 @@ public class LeaderboardController : ControllerBase
     }
 
     [HttpGet]
+    [ResponseCache(Duration = 60)]
     public async Task<ActionResult<List<LeaderboardEntry>>> GetLeaderboard(
         [FromQuery] int limit = 50)
     {
