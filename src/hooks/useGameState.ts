@@ -4,14 +4,17 @@ import { getTodayAEST, getDailyPuzzle } from '../utils/puzzle'
 import { loadGameState, saveGameState } from '../utils/storage'
 import { useStats } from './useStats'
 import { useDateReload } from './useDateReload'
+import { useAuthContext } from '../contexts/AuthContext'
 import { songLookup } from '../data/songs'
 import { logGameStart, logGuess, logGameEnd } from '../lib/analytics'
+import { api } from '../lib/api'
 
 function createInitialState(date: string): GameState {
   return { date, guesses: [], status: 'playing' }
 }
 
 export function useGameState(date: string) {
+  const { user } = useAuthContext()
   const today = useMemo(() => getTodayAEST(), [])
   const isToday = date === today
   const puzzle: DailyPuzzle = useMemo(() => getDailyPuzzle(date), [date])
@@ -25,11 +28,32 @@ export function useGameState(date: string) {
   const stats = useStats(date, gameState)
   useDateReload(isToday)
 
-  // Reset state when the selected date changes
+  // Load game state from API when authenticated, falling back to localStorage
   useEffect(() => {
-    setGameState(loadGameState(date) ?? createInitialState(date))
+    if (!user) {
+      setGameState(loadGameState(date) ?? createInitialState(date))
+      setJustWon(false)
+      return
+    }
+
+    let cancelled = false
+    api.get<GameState>(`/api/games/${date}`)
+      .then((remote) => {
+        if (!cancelled) {
+          saveGameState(remote) // cache locally
+          setGameState(remote)
+        }
+      })
+      .catch(() => {
+        // API unavailable or 404 — use local state
+        if (!cancelled) {
+          setGameState(loadGameState(date) ?? createInitialState(date))
+        }
+      })
     setJustWon(false)
-  }, [date])
+
+    return () => { cancelled = true }
+  }, [date, user])
 
   // Log game_start when a fresh puzzle is opened
   const loggedStart = useRef<string | null>(null)
@@ -57,10 +81,25 @@ export function useGameState(date: string) {
         status: guess.result === 'correct' ? 'won' : isLastGuess ? 'lost' : 'playing',
       }
       saveGameState(newState)
+
+      // Sync to API when authenticated
+      if (user) {
+        api.put(`/api/games/${newState.date}`, newState).catch(() => {})
+
+        // Submit final result for aggregation when game ends
+        if (newState.status === 'won' || newState.status === 'lost') {
+          api.post(`/api/games/${newState.date}/complete`, {
+            displayName: user.displayName ?? 'Anonymous',
+            guessCount: newState.guesses.length,
+            status: newState.status,
+          }).catch(() => {})
+        }
+      }
+
       return newState
     })
     if (guess.result === 'correct') setJustWon(true)
-  }, [])
+  }, [user])
 
   // Log guess and game_end events
   const prevGuessCount = useRef(gameState.guesses.length)

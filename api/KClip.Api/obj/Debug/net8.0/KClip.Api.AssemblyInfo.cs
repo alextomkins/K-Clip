@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KClip.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+527673769611dea107761531e4ef8631cc2769c3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+19141f790822f2aa5433fb2168fb0c0e6057c60a")]
 [assembly: System.Reflection.AssemblyProductAttribute("KClip.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KClip.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
