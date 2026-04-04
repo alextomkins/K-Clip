@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import confetti from 'canvas-confetti'
-import { GameState, DailyPuzzle } from '../types'
+import { GameState, DailyPuzzle, PuzzleSummary } from '../types'
 import { generateShareText, copyToClipboard } from '../utils/share'
 import { logShare } from '../lib/analytics'
 
@@ -8,9 +8,10 @@ interface ResultScreenProps {
   gameState: GameState
   puzzle: DailyPuzzle
   justWon: boolean
+  puzzleSummary: PuzzleSummary | null
 }
 
-export function ResultScreen({ gameState, puzzle, justWon }: ResultScreenProps) {
+export function ResultScreen({ gameState, puzzle, justWon, puzzleSummary }: ResultScreenProps) {
   const [copied, setCopied] = useState(false)
 
   const isWin = gameState.status === 'won'
@@ -58,6 +59,17 @@ export function ResultScreen({ gameState, puzzle, justWon }: ResultScreenProps) 
       >
         {copied ? '✅ Copied!' : '📋 Share Result'}
       </button>
+
+      {puzzleSummary && (
+        <div className="mt-4 p-3 bg-gray-800 rounded-lg text-sm text-gray-300">
+          <p className="font-semibold text-gray-400 text-xs uppercase tracking-wide mb-1">📊 Community Stats</p>
+          <p>
+            Average: <span className="font-bold text-white">{puzzleSummary.avgGuesses.toFixed(1)}</span> guesses
+            <span className="text-gray-500"> · </span>
+            <span className="font-bold text-white">{puzzleSummary.totalPlays}</span> player{puzzleSummary.totalPlays !== 1 ? 's' : ''} today
+          </p>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
-import { GameState, Guess, GuessResult, DailyPuzzle, MAX_GUESSES, CLIP_DURATIONS } from '../types'
+import { GameState, Guess, GuessResult, DailyPuzzle, PuzzleSummary, MAX_GUESSES, CLIP_DURATIONS } from '../types'
 import { getTodayAEST, getDailyPuzzle } from '../utils/puzzle'
 import { loadGameState, saveGameState } from '../utils/storage'
 import { useStats } from './useStats'
@@ -24,6 +24,7 @@ export function useGameState(date: string) {
   })
 
   const [justWon, setJustWon] = useState(false)
+  const [puzzleSummary, setPuzzleSummary] = useState<PuzzleSummary | null>(null)
 
   const stats = useStats(date, gameState)
   useDateReload(isToday)
@@ -51,9 +52,25 @@ export function useGameState(date: string) {
         }
       })
     setJustWon(false)
+    setPuzzleSummary(null)
 
     return () => { cancelled = true }
   }, [date, user])
+
+  // Fetch puzzle summary for completed games when authenticated
+  useEffect(() => {
+    if (!user || gameState.status === 'playing') {
+      setPuzzleSummary(null)
+      return
+    }
+    let cancelled = false
+    api.get<PuzzleSummary>(`/api/puzzles/${date}/summary`)
+      .then((summary) => {
+        if (!cancelled && summary.totalPlays > 0) setPuzzleSummary(summary)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [user, date, gameState.status])
 
   // Log game_start when a fresh puzzle is opened
   const loggedStart = useRef<string | null>(null)
@@ -88,11 +105,13 @@ export function useGameState(date: string) {
 
         // Submit final result for aggregation when game ends
         if (newState.status === 'won' || newState.status === 'lost') {
-          api.post(`/api/games/${newState.date}/complete`, {
+          api.post<PuzzleSummary>(`/api/games/${newState.date}/complete`, {
             displayName: user.displayName ?? 'Anonymous',
             guessCount: newState.guesses.length,
             status: newState.status,
-          }).catch(() => {})
+          })
+            .then((summary) => { if (summary.totalPlays > 0) setPuzzleSummary(summary) })
+            .catch(() => {})
         }
       }
 
@@ -142,5 +161,6 @@ export function useGameState(date: string) {
     skipGuess,
     justWon,
     stats,
+    puzzleSummary,
   }
 }

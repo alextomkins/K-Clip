@@ -36,6 +36,7 @@ function App() {
     skipGuess,
     justWon,
     stats,
+    puzzleSummary,
   } = useGameState(selectedDate)
 
   const [howToPlayOpen, setHowToPlayOpen] = useState(false)
@@ -172,6 +173,7 @@ function App() {
         isOpen={statsOpen}
         onClose={() => setStatsOpen(false)}
         lastResultKey={lastResultKey}
+        puzzleSummary={puzzleSummary}
       />
 
       {/* Clip progress */}
@@ -213,7 +215,7 @@ function App() {
         </div>
       ) : (
         <div className="mb-4 w-full flex justify-center">
-          <ResultScreen gameState={gameState} puzzle={puzzle} justWon={justWon} />
+          <ResultScreen gameState={gameState} puzzle={puzzle} justWon={justWon} puzzleSummary={puzzleSummary} />
         </div>
       )}
 

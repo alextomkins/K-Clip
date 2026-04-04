@@ -46,3 +46,11 @@ export interface StatsRecord {
   lastPlayedDate: string | null
   lastWonDate: string | null
 }
+
+export interface PuzzleSummary {
+  totalPlays: number
+  totalGuesses: number
+  avgGuesses: number
+  winCount: number
+  distribution: Record<string, number>
+}
