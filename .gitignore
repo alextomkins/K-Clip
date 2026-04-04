@@ -9,6 +9,10 @@ node_modules/
 # Build output
 dist/
 
+# .NET build output
+**/bin/
+**/obj/
+
 # Editor
 .vscode/*
 !.vscode/extensions.json
