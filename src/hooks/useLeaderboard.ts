@@ -1,21 +1,26 @@
 import { useState, useEffect, useCallback } from 'react'
-import { LeaderboardEntry } from '../types'
+import { LeaderboardEntry, LeaderboardResponse } from '../types'
 import { useAuthContext } from '../contexts/AuthContext'
 import { api } from '../lib/api'
 
 export function useLeaderboard() {
   const { user } = useAuthContext()
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
+  const [currentUser, setCurrentUser] = useState<LeaderboardEntry | null>(null)
   const [loading, setLoading] = useState(false)
-
-  const userRank = user ? entries.find((e) => e.uid === user.uid)?.rank ?? null : null
 
   const refresh = useCallback(() => {
     if (!user) return
     setLoading(true)
-    api.get<LeaderboardEntry[]>('/api/leaderboard')
-      .then(setEntries)
-      .catch(() => setEntries([]))
+    api.get<LeaderboardResponse>('/api/leaderboard')
+      .then((res) => {
+        setEntries(res.entries)
+        setCurrentUser(res.currentUser)
+      })
+      .catch(() => {
+        setEntries([])
+        setCurrentUser(null)
+      })
       .finally(() => setLoading(false))
   }, [user])
 
@@ -23,5 +28,5 @@ export function useLeaderboard() {
     refresh()
   }, [refresh])
 
-  return { entries, loading, userRank, refresh }
+  return { entries, currentUser, loading, refresh }
 }

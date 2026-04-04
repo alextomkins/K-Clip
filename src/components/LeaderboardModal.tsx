@@ -2,6 +2,8 @@ import { LeaderboardEntry } from '../types'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 
+const MIN_GAMES = 5
+
 interface LeaderboardModalProps {
   isOpen: boolean
   onClose: () => void
@@ -9,9 +11,20 @@ interface LeaderboardModalProps {
 
 export function LeaderboardModal({ isOpen, onClose }: LeaderboardModalProps) {
   const { user } = useAuthContext()
-  const { entries, loading, userRank } = useLeaderboard()
+  const { entries, currentUser, loading } = useLeaderboard()
 
   if (!isOpen) return null
+
+  // Is the current user already shown in the top entries?
+  const currentUserInTop = currentUser
+    ? entries.some((e) => e.uid === currentUser.uid)
+    : false
+
+  // Should we show the current user as a separate row below?
+  const showCurrentUserBelow = currentUser && !currentUserInTop
+
+  // Is the current user unqualified (not enough games)?
+  const isUnqualified = currentUser ? currentUser.played < MIN_GAMES : false
 
   return (
     <div
@@ -33,11 +46,11 @@ export function LeaderboardModal({ isOpen, onClose }: LeaderboardModalProps) {
         </button>
 
         <h2 className="text-xl font-bold mb-1 text-center">🏆 Leaderboard</h2>
-        <p className="text-gray-500 text-xs text-center mb-4">Minimum 5 games played</p>
+        <p className="text-gray-500 text-xs text-center mb-4">Minimum {MIN_GAMES} games played</p>
 
         {loading ? (
           <p className="text-gray-400 text-center py-8">Loading...</p>
-        ) : entries.length === 0 ? (
+        ) : entries.length === 0 && !showCurrentUserBelow ? (
           <p className="text-gray-400 text-center py-8">No qualifying players yet</p>
         ) : (
           <div className="overflow-y-auto -mx-2 px-2">
@@ -49,6 +62,7 @@ export function LeaderboardModal({ isOpen, onClose }: LeaderboardModalProps) {
                   <th className="pb-2 text-right">Win %</th>
                   <th className="pb-2 text-right">Avg</th>
                   <th className="pb-2 text-right">Streak</th>
+                  <th className="pb-2 text-right">Played</th>
                 </tr>
               </thead>
               <tbody>
@@ -57,29 +71,65 @@ export function LeaderboardModal({ isOpen, onClose }: LeaderboardModalProps) {
                     key={entry.uid}
                     entry={entry}
                     isCurrentUser={entry.uid === user?.uid}
+                    dimmed={false}
                   />
                 ))}
+
+                {showCurrentUserBelow && (
+                  <>
+                    {/* Separator row */}
+                    <tr>
+                      <td colSpan={6} className="py-2 text-center text-gray-600 text-xs tracking-widest">
+                        ···
+                      </td>
+                    </tr>
+                    <LeaderboardRow
+                      entry={currentUser}
+                      isCurrentUser
+                      dimmed={isUnqualified}
+                    />
+                  </>
+                )}
               </tbody>
             </table>
-          </div>
-        )}
 
-        {userRank && (
-          <p className="text-gray-400 text-xs text-center mt-4 pt-3 border-t border-gray-700">
-            Your rank: <span className="font-bold text-white">#{userRank}</span>
-          </p>
+            {showCurrentUserBelow && isUnqualified && (
+              <p className="text-gray-500 text-xs text-center mt-2">
+                Play {MIN_GAMES - currentUser.played} more game{MIN_GAMES - currentUser.played !== 1 ? 's' : ''} to qualify
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>
   )
 }
 
-function LeaderboardRow({ entry, isCurrentUser }: { entry: LeaderboardEntry; isCurrentUser: boolean }) {
-  const rankDisplay =
-    entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `${entry.rank}`
+function LeaderboardRow({
+  entry,
+  isCurrentUser,
+  dimmed,
+}: {
+  entry: LeaderboardEntry
+  isCurrentUser: boolean
+  dimmed: boolean
+}) {
+  const rankDisplay = dimmed
+    ? '—'
+    : entry.rank === 1
+      ? '🥇'
+      : entry.rank === 2
+        ? '🥈'
+        : entry.rank === 3
+          ? '🥉'
+          : `${entry.rank}`
 
   return (
-    <tr className={`border-b border-gray-700/50 ${isCurrentUser ? 'bg-indigo-900/30' : ''}`}>
+    <tr
+      className={`border-b border-gray-700/50 ${
+        isCurrentUser ? 'bg-indigo-900/30' : ''
+      } ${dimmed ? 'opacity-50' : ''}`}
+    >
       <td className="py-2 text-left">{rankDisplay}</td>
       <td className="py-2">
         <div className="flex items-center gap-2">
@@ -103,6 +153,7 @@ function LeaderboardRow({ entry, isCurrentUser }: { entry: LeaderboardEntry; isC
       <td className="py-2 text-right font-mono text-gray-300">{entry.winPct.toFixed(0)}%</td>
       <td className="py-2 text-right font-mono text-gray-300">{entry.avgGuesses.toFixed(1)}</td>
       <td className="py-2 text-right font-mono text-gray-300">{entry.maxStreak}</td>
+      <td className="py-2 text-right font-mono text-gray-300">{entry.played}</td>
     </tr>
   )
 }

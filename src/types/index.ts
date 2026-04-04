@@ -67,3 +67,8 @@ export interface LeaderboardEntry {
   avgGuesses: number
   rank: number
 }
+
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[]
+  currentUser: LeaderboardEntry | null
+}

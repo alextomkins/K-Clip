@@ -48,6 +48,8 @@ public class FirestoreGameRepository : IGameRepository
 
     public async Task SaveStats(string uid, StatsRecord stats)
     {
+        // Ensure parent user document exists so GetAllUserStats can discover this user
+        await EnsureUserDocExists(uid);
         await _db.Collection("users").Document(uid)
             .Collection("data").Document("stats")
             .SetAsync(stats);
@@ -96,9 +98,7 @@ public class FirestoreGameRepository : IGameRepository
 
     public async Task SaveProfile(string uid, UserProfile profile)
     {
-        // Ensure parent user document exists so GetAllUserStats can discover this user
-        await _db.Collection("users").Document(uid).SetAsync(
-            new Dictionary<string, object>(), Google.Cloud.Firestore.SetOptions.MergeAll);
+        await EnsureUserDocExists(uid);
         await _db.Collection("users").Document(uid)
             .Collection("data").Document("profile")
             .SetAsync(profile);
@@ -126,6 +126,18 @@ public class FirestoreGameRepository : IGameRepository
         }
 
         return results;
+    }
+
+    // --- Helpers ---
+
+    private async Task EnsureUserDocExists(string uid)
+    {
+        var userRef = _db.Collection("users").Document(uid);
+        var doc = await userRef.GetSnapshotAsync();
+        if (!doc.Exists)
+        {
+            await userRef.SetAsync(new Dictionary<string, object> { ["createdAt"] = FieldValue.ServerTimestamp });
+        }
     }
 
     // --- Account Deletion ---

@@ -1,3 +1,4 @@
+using KClip.Api.Auth;
 using KClip.Api.Models;
 using KClip.Api.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -18,11 +19,12 @@ public class LeaderboardController : ControllerBase
     }
 
     [HttpGet]
-    [ResponseCache(Duration = 60)]
-    public async Task<ActionResult<List<LeaderboardEntry>>> GetLeaderboard(
-        [FromQuery] int limit = 50)
+    [ResponseCache(Duration = 60, VaryByQueryKeys = ["limit"])]
+    public async Task<ActionResult<LeaderboardResponse>> GetLeaderboard(
+        [FromQuery] int limit = 10)
     {
-        var entries = await _leaderboardService.GetLeaderboard(limit);
-        return Ok(entries);
+        var uid = User.GetUid();
+        var response = await _leaderboardService.GetLeaderboard(uid, limit);
+        return Ok(response);
     }
 }
