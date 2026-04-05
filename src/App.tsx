@@ -179,6 +179,14 @@ function App() {
       </div>
       <div className="flex items-center gap-3 mb-2">
         <button
+          onClick={() => navigate(1)}
+          disabled={selectedDay <= 1}
+          className="text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed text-xl w-6 text-center"
+          aria-label="First puzzle"
+        >
+          «
+        </button>
+        <button
           onClick={() => navigate(selectedDay - 1)}
           disabled={selectedDay <= 1}
           className="text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed text-xl w-6 text-center"
@@ -194,6 +202,14 @@ function App() {
           aria-label="Next puzzle"
         >
           ›
+        </button>
+        <button
+          onClick={() => navigate(todayDayNumber)}
+          disabled={selectedDay >= todayDayNumber}
+          className="text-gray-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed text-xl w-6 text-center"
+          aria-label="Today's puzzle"
+        >
+          »
         </button>
       </div>
       {selectedDay < todayDayNumber && (
