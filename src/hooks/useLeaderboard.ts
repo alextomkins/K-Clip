@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { LeaderboardEntry, LeaderboardResponse } from '../types'
 import { useAuthContext } from '../contexts/AuthContext'
 import { api } from '../lib/api'
@@ -12,12 +12,15 @@ export function useLeaderboard() {
   const [isHidden, setIsHidden] = useState(false)
   const [loading, setLoading] = useState(false)
   const [toggling, setToggling] = useState(false)
+  const isHiddenRef = useRef(isHidden)
+  isHiddenRef.current = isHidden
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback((bustCache = false) => {
     setLoading(true)
+    const cacheBust = bustCache ? `?_=${Date.now()}` : ''
     const fetchLeaderboard = user
-      ? api.get<LeaderboardResponse>('/api/leaderboard')
-      : fetch(`${BASE_URL}/api/leaderboard`).then((r) => {
+      ? api.get<LeaderboardResponse>(`/api/leaderboard${cacheBust}`)
+      : fetch(`${BASE_URL}/api/leaderboard${cacheBust}`).then((r) => {
           if (!r.ok) throw new Error(`API ${r.status}`)
           return r.json() as Promise<LeaderboardResponse>
         })
@@ -43,13 +46,14 @@ export function useLeaderboard() {
     if (toggling) return
     setToggling(true)
     try {
-      await api.put('/api/profile/visibility', { visible: isHidden })
-      setIsHidden(!isHidden)
-      refresh()
+      const wasHidden = isHiddenRef.current
+      await api.put('/api/profile/visibility', { visible: wasHidden })
+      setIsHidden(!wasHidden)
+      refresh(true)
     } finally {
       setToggling(false)
     }
-  }, [isHidden, toggling, refresh])
+  }, [toggling, refresh])
 
   return { entries, currentUser, isHidden, loading, toggling, refresh, toggleVisibility }
 }
