@@ -1,3 +1,4 @@
+using FirebaseAdmin.Auth;
 using KClip.Api.Auth;
 using KClip.Api.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -22,6 +23,7 @@ public class AccountController : ControllerBase
     {
         var uid = User.GetUid();
         await _repo.DeleteAllUserData(uid);
+        await FirebaseAuth.DefaultInstance.DeleteUserAsync(uid);
         return NoContent();
     }
 }
