@@ -8,7 +8,6 @@ namespace KClip.Api.Controllers;
 
 [ApiController]
 [Route("api/leaderboard")]
-[Authorize]
 public class LeaderboardController : ControllerBase
 {
     private readonly LeaderboardService _leaderboardService;
@@ -23,7 +22,7 @@ public class LeaderboardController : ControllerBase
     public async Task<ActionResult<LeaderboardResponse>> GetLeaderboard(
         [FromQuery] int limit = 10)
     {
-        var uid = User.GetUid();
+        var uid = User.Identity?.IsAuthenticated == true ? User.GetUid() : null;
         var response = await _leaderboardService.GetLeaderboard(uid, limit);
         return Ok(response);
     }

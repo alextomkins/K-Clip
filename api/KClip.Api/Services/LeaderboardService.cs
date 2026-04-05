@@ -12,7 +12,7 @@ public class LeaderboardService
         _repo = repo;
     }
 
-    public async Task<LeaderboardResponse> GetLeaderboard(string currentUid, int limit = 50)
+    public async Task<LeaderboardResponse> GetLeaderboard(string? currentUid, int limit = 50)
     {
         var allStats = await _repo.GetAllUserStats();
 

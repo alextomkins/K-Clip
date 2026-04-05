@@ -25,18 +25,22 @@ export function useGameState(date: string) {
 
   const [justWon, setJustWon] = useState(false)
   const [puzzleSummary, setPuzzleSummary] = useState<PuzzleSummary | null>(null)
+  const [loading, setLoading] = useState(false)
 
   const stats = useStats(date, gameState)
   useDateReload(isToday)
 
   // Load game state from API when authenticated, falling back to localStorage
   useEffect(() => {
-    if (!user) {
-      setGameState(loadGameState(date) ?? createInitialState(date))
-      setJustWon(false)
-      return
-    }
+    // Always immediately show cached/local state to avoid stale data flash
+    const local = loadGameState(date) ?? createInitialState(date)
+    setGameState(local)
+    setJustWon(false)
+    setPuzzleSummary(null)
 
+    if (!user) return
+
+    setLoading(true)
     let cancelled = false
     api.get<GameState>(`/api/games/${date}`)
       .then((remote) => {
@@ -46,13 +50,11 @@ export function useGameState(date: string) {
         }
       })
       .catch(() => {
-        // API unavailable or 404 — use local state
-        if (!cancelled) {
-          setGameState(loadGameState(date) ?? createInitialState(date))
-        }
+        // API unavailable or 404 — local state already set
       })
-    setJustWon(false)
-    setPuzzleSummary(null)
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
 
     return () => { cancelled = true }
   }, [date, user])
@@ -155,6 +157,7 @@ export function useGameState(date: string) {
   return {
     puzzle,
     gameState,
+    loading,
     currentClipIndex,
     attemptsRemaining,
     submitGuess,

@@ -3,6 +3,8 @@ import { LeaderboardEntry, LeaderboardResponse } from '../types'
 import { useAuthContext } from '../contexts/AuthContext'
 import { api } from '../lib/api'
 
+const BASE_URL = import.meta.env.VITE_API_BASE_URL as string
+
 export function useLeaderboard() {
   const { user } = useAuthContext()
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
@@ -12,9 +14,15 @@ export function useLeaderboard() {
   const [toggling, setToggling] = useState(false)
 
   const refresh = useCallback(() => {
-    if (!user) return
     setLoading(true)
-    api.get<LeaderboardResponse>('/api/leaderboard')
+    const fetchLeaderboard = user
+      ? api.get<LeaderboardResponse>('/api/leaderboard')
+      : fetch(`${BASE_URL}/api/leaderboard`).then((r) => {
+          if (!r.ok) throw new Error(`API ${r.status}`)
+          return r.json() as Promise<LeaderboardResponse>
+        })
+
+    fetchLeaderboard
       .then((res) => {
         setEntries(res.entries)
         setCurrentUser(res.currentUser)

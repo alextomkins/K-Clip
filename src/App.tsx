@@ -38,6 +38,7 @@ function App() {
   const {
     puzzle,
     gameState,
+    loading: gameLoading,
     currentClipIndex,
     attemptsRemaining,
     submitGuess,
@@ -108,15 +109,13 @@ function App() {
         >
           📊
         </button>
-        {user && (
-          <button
-            onClick={() => setLeaderboardOpen(true)}
-            className="text-gray-400 hover:text-white text-xl leading-none"
-            aria-label="View leaderboard"
-          >
-            🏆
-          </button>
-        )}
+        <button
+          onClick={() => setLeaderboardOpen(true)}
+          className="text-gray-400 hover:text-white text-xl leading-none"
+          aria-label="View leaderboard"
+        >
+          🏆
+        </button>
         {!authLoading && (
           user ? (
             <div className="relative" ref={userMenuRef}>
@@ -238,7 +237,7 @@ function App() {
       {/* Guess input or Result screen */}
       {isPlaying ? (
         <div className="w-full flex flex-col items-center gap-3 mb-4">
-          <p className="text-gray-400 text-sm">
+          <p className={`text-gray-400 text-sm transition-opacity duration-150 ${gameLoading ? 'opacity-0' : 'opacity-100'}`}>
             {attemptsRemaining} guess{attemptsRemaining !== 1 ? 'es' : ''} remaining
           </p>
           <SongSearch
@@ -256,7 +255,7 @@ function App() {
 
       {/* Guess history */}
       <div className="mt-2 w-full flex justify-center">
-        <GuessHistory guesses={gameState.guesses} />
+        <GuessHistory guesses={gameState.guesses} loading={gameLoading} />
       </div>
 
       <footer className="mt-auto pt-8 mb-4 text-gray-500 text-xs text-center space-y-1">
