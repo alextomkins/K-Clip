@@ -71,4 +71,5 @@ export interface LeaderboardEntry {
 export interface LeaderboardResponse {
   entries: LeaderboardEntry[]
   currentUser: LeaderboardEntry | null
+  currentUserHidden: boolean
 }

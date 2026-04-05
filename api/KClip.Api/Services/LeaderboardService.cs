@@ -16,7 +16,7 @@ public class LeaderboardService
     {
         var allStats = await _repo.GetAllUserStats();
 
-        // Build ranked list from all qualifying users
+        // Build ranked list from all qualifying users (including hidden)
         var allRanked = allStats
             .Where(s => s.Stats.Played >= MinGamesPlayed)
             .Select(s => BuildEntry(s))
@@ -27,10 +27,22 @@ public class LeaderboardService
             .Select((e, i) => { e.Rank = i + 1; return e; })
             .ToList();
 
-        var topEntries = allRanked.Take(limit).ToList();
+        // Public entries exclude hidden users, then re-rank for display
+        var visibleRanked = allRanked
+            .Where(e =>
+            {
+                var data = allStats.First(s => s.Uid == e.Uid);
+                return !(data.Profile?.HideFromLeaderboard ?? false);
+            })
+            .Select((e, i) => { var copy = CloneEntry(e); copy.Rank = i + 1; return copy; })
+            .ToList();
 
-        // Find current user — either in the ranked list or build an unqualified entry
+        var topEntries = visibleRanked.Take(limit).ToList();
+
+        // Find current user — use the full ranking (including hidden) for true rank
         var currentUserEntry = allRanked.FirstOrDefault(e => e.Uid == currentUid);
+        var currentUserHidden = false;
+
         if (currentUserEntry is null)
         {
             // User doesn't qualify — build their entry anyway (rank = 0 means unranked)
@@ -38,14 +50,38 @@ public class LeaderboardService
             if (userData.Stats is not null)
             {
                 currentUserEntry = BuildEntry(userData);
-                currentUserEntry.Rank = 0; // indicates not ranked
+                currentUserEntry.Rank = 0;
             }
+            currentUserHidden = userData.Profile?.HideFromLeaderboard ?? false;
+        }
+        else
+        {
+            var userData = allStats.First(s => s.Uid == currentUid);
+            currentUserHidden = userData.Profile?.HideFromLeaderboard ?? false;
         }
 
         return new LeaderboardResponse
         {
             Entries = topEntries,
             CurrentUser = currentUserEntry,
+            CurrentUserHidden = currentUserHidden,
+        };
+    }
+
+    private static LeaderboardEntry CloneEntry(LeaderboardEntry e)
+    {
+        return new LeaderboardEntry
+        {
+            Uid = e.Uid,
+            DisplayName = e.DisplayName,
+            PhotoURL = e.PhotoURL,
+            Played = e.Played,
+            Wins = e.Wins,
+            WinPct = e.WinPct,
+            CurrentStreak = e.CurrentStreak,
+            MaxStreak = e.MaxStreak,
+            AvgGuesses = e.AvgGuesses,
+            Rank = e.Rank,
         };
     }
 

@@ -367,6 +367,83 @@ public async Task<List<LeaderboardEntry>> GetLeaderboard(int limit = 50)
 - Fetches and caches leaderboard data.
 - Returns `{ entries, loading, userRank }`.
 
+### 5.4 Leaderboard Visibility (Opt-Out)
+
+Allow users to hide themselves from the public leaderboard while still participating in the game and community stats.
+
+#### Behavior
+
+- Users are **visible by default** — opt-out, not opt-in.
+- Hidden users are excluded from the `entries` list returned to other users.
+- Hidden users **still see their own rank** in the `currentUser` field (calculated as if they were included), so they know where they'd place.
+- Hiding from the leaderboard does **not** affect daily averages or puzzle summaries — those remain anonymous aggregates.
+- The setting is stored on the user's profile document in Firestore: `users/{uid}/data/profile → { ..., hideFromLeaderboard: bool }`.
+
+#### API Changes
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `PUT` | `/api/profile/visibility` | Required | Set leaderboard visibility (`{ visible: bool }`) |
+| `GET` | `/api/profile/visibility` | Required | Get current visibility setting |
+
+`PUT /api/profile/visibility` writes `hideFromLeaderboard` to the user's profile document. The field defaults to `false` (visible) when absent.
+
+#### Server-side (`LeaderboardService.cs`)
+
+```csharp
+// When building the public entries list, filter out hidden users:
+var visibleStats = allStats.Where(s => !s.HideFromLeaderboard);
+
+// When building currentUser, use the FULL list (including hidden users)
+// so the current user sees their true rank regardless of visibility setting.
+var allRanked = allStats
+    .Where(s => s.Played >= MinGamesPlayed)
+    .OrderByDescending(e => e.WinPct)
+    .ThenBy(e => e.AvgGuesses)
+    // ... etc
+    .ToList();
+var currentUserRank = allRanked.FindIndex(e => e.Uid == currentUid) + 1;
+```
+
+#### Client-side
+
+##### `src/components/LeaderboardModal.tsx`
+- Add a toggle/checkbox at the bottom of the modal: **"Hide me from the leaderboard"**.
+- When toggled, call `PUT /api/profile/visibility` with `{ visible: false }`.
+- When hidden, the user's own row still appears (highlighted) with their ghost rank but a visual indicator (e.g., 👻 icon or "Hidden" badge) confirms they're not visible to others.
+
+##### `src/hooks/useLeaderboard.ts`
+- Fetch visibility state on mount (or derive from `currentUser.hideFromLeaderboard` in the leaderboard response).
+- Expose `{ ..., isHidden, toggleVisibility }`.
+
+#### Firestore Schema Update
+
+```
+users/{uid}/data/profile: {
+    displayName,
+    photoURL,
+    createdAt,
++   hideFromLeaderboard: bool  // default: false (visible)
+}
+```
+
+#### Model Changes
+
+**C# — `UserProfile.cs`**
+```csharp
+[FirestoreProperty("hideFromLeaderboard")]
+public bool HideFromLeaderboard { get; set; } = false;
+```
+
+**TypeScript — `src/types/index.ts`**
+```typescript
+interface LeaderboardResponse {
+  entries: LeaderboardEntry[];
+  currentUser: LeaderboardEntry | null;
++ currentUserHidden: boolean;
+}
+```
+
 ---
 
 ## Phase 6: Updated Types
@@ -448,7 +525,8 @@ Phase 5  Leaderboard
   ├── 5b  Add LeaderboardController endpoint
   ├── 5c  Create LeaderboardModal component
   ├── 5d  Create useLeaderboard hook
-  └── 5e  Add 🏆 button to header
+  ├── 5e  Add 🏆 button to header
+  └── 5f  Add leaderboard visibility opt-out (hide me toggle)
 
 Phase 6  Polish & Edge Cases
   ├── 6a  Handle offline/network errors gracefully

@@ -13,4 +13,7 @@ public class UserProfile
 
     [FirestoreProperty("createdAt")]
     public string CreatedAt { get; set; } = "";
+
+    [FirestoreProperty("hideFromLeaderboard")]
+    public bool HideFromLeaderboard { get; set; } = false;
 }

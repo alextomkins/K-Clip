@@ -11,7 +11,7 @@ interface LeaderboardModalProps {
 
 export function LeaderboardModal({ isOpen, onClose }: LeaderboardModalProps) {
   const { user } = useAuthContext()
-  const { entries, currentUser, loading } = useLeaderboard()
+  const { entries, currentUser, isHidden, loading, toggling, toggleVisibility } = useLeaderboard()
 
   if (!isOpen) return null
 
@@ -72,6 +72,7 @@ export function LeaderboardModal({ isOpen, onClose }: LeaderboardModalProps) {
                     entry={entry}
                     isCurrentUser={entry.uid === user?.uid}
                     dimmed={false}
+                    hidden={false}
                   />
                 ))}
 
@@ -87,6 +88,7 @@ export function LeaderboardModal({ isOpen, onClose }: LeaderboardModalProps) {
                       entry={currentUser}
                       isCurrentUser
                       dimmed={isUnqualified}
+                      hidden={isHidden}
                     />
                   </>
                 )}
@@ -100,6 +102,21 @@ export function LeaderboardModal({ isOpen, onClose }: LeaderboardModalProps) {
             )}
           </div>
         )}
+
+        {user && (
+          <div className="mt-4 pt-3 border-t border-gray-700 flex items-center justify-center">
+            <button
+              onClick={toggleVisibility}
+              disabled={toggling}
+              className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+            >
+              <span className={`inline-block w-8 h-5 rounded-full relative transition-colors ${isHidden ? 'bg-gray-600' : 'bg-indigo-500'}`}>
+                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${isHidden ? 'left-0.5' : 'left-3.5'}`} />
+              </span>
+              <span>{isHidden ? 'Hidden from leaderboard' : 'Visible on leaderboard'}</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -109,10 +126,12 @@ function LeaderboardRow({
   entry,
   isCurrentUser,
   dimmed,
+  hidden,
 }: {
   entry: LeaderboardEntry
   isCurrentUser: boolean
   dimmed: boolean
+  hidden: boolean
 }) {
   const rankDisplay = dimmed
     ? '—'
@@ -148,6 +167,9 @@ function LeaderboardRow({
           <span className={`truncate ${isCurrentUser ? 'font-semibold text-white' : 'text-gray-300'}`}>
             {entry.displayName}
           </span>
+          {hidden && (
+            <span className="text-xs text-gray-500 ml-1 shrink-0">👻</span>
+          )}
         </div>
       </td>
       <td className="py-2 text-right font-mono text-gray-300">{entry.winPct.toFixed(0)}%</td>

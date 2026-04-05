@@ -7,7 +7,9 @@ export function useLeaderboard() {
   const { user } = useAuthContext()
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [currentUser, setCurrentUser] = useState<LeaderboardEntry | null>(null)
+  const [isHidden, setIsHidden] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [toggling, setToggling] = useState(false)
 
   const refresh = useCallback(() => {
     if (!user) return
@@ -16,6 +18,7 @@ export function useLeaderboard() {
       .then((res) => {
         setEntries(res.entries)
         setCurrentUser(res.currentUser)
+        setIsHidden(res.currentUserHidden)
       })
       .catch(() => {
         setEntries([])
@@ -28,5 +31,17 @@ export function useLeaderboard() {
     refresh()
   }, [refresh])
 
-  return { entries, currentUser, loading, refresh }
+  const toggleVisibility = useCallback(async () => {
+    if (toggling) return
+    setToggling(true)
+    try {
+      await api.put('/api/profile/visibility', { visible: isHidden })
+      setIsHidden(!isHidden)
+      refresh()
+    } finally {
+      setToggling(false)
+    }
+  }, [isHidden, toggling, refresh])
+
+  return { entries, currentUser, isHidden, loading, toggling, refresh, toggleVisibility }
 }
