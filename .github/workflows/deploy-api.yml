@@ -34,4 +34,5 @@ jobs:
             --source ./api/KClip.Api \
             --region australia-southeast1 \
             --project k-clip-32037 \
+            --clear-base-image \
             --set-env-vars "GOOGLE_CLOUD_PROJECT=k-clip-32037,FIRESTORE_DATABASE_ID=k-clip,ASPNETCORE_URLS=http://+:8080"
