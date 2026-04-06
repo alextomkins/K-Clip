@@ -29,7 +29,7 @@ Share your result with friends after each game!
 🟥🟧🟩⬜⬜⬜
 Guessed in 3/6
 
-alextomkins.github.io/K-Clip/ 🎵
+https://alextomkins.github.io/K-Clip/ 🎵
 ```
 
 ## Features
