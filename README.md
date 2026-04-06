@@ -60,7 +60,7 @@ alextomkins.github.io/K-Clip/ 🎵
 
 ### Backend
 
-- **ASP.NET Web API** (.NET 8 / C#)
+- **ASP.NET Web API** (.NET 10 / C#)
 - **Cloud Firestore** for data storage
 - **Google Cloud Run** for hosting
 - **Firebase Admin SDK** for auth validation

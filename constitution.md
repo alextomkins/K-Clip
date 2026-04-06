@@ -90,11 +90,11 @@ https://alextomkins.github.io/K-Clip/ 🎵
 
 ### Backend
 
-* Framework: ASP.NET Web API (C# / .NET 8)
+* Framework: ASP.NET Web API (C# / .NET 10)
 * Hosting: Google Cloud Run (australia-southeast1)
 * Database: Cloud Firestore (server-side access only via `Google.Cloud.Firestore` SDK)
 * Auth validation: Firebase Admin SDK (`FirebaseAdmin`) — custom `AuthenticationHandler` validates Firebase ID tokens
-* Container: Dockerfile based on `mcr.microsoft.com/dotnet/aspnet:8.0`
+* Container: Dockerfile based on `mcr.microsoft.com/dotnet/aspnet:10.0`
 * CORS: Configured for GitHub Pages origin + localhost dev
 * Swagger/OpenAPI: Enabled in development mode
 * Response caching: Leaderboard (60s), puzzle summaries (30s)
@@ -254,7 +254,7 @@ https://alextomkins.github.io/K-Clip/ 🎵
 api/
 ├── KClip.Api/
 │   ├── Program.cs                    # Host config, DI, middleware, CORS, Swagger
-│   ├── Dockerfile                    # .NET 8 multi-stage build, port 8080
+│   ├── Dockerfile                    # .NET 10 multi-stage build, port 8080
 │   ├── appsettings.json / .Development.json
 │   ├── Controllers/
 │   │   ├── AccountController.cs      # DELETE account (Firestore + Firebase Auth)
