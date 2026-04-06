@@ -9,16 +9,10 @@ namespace KClip.Api.Controllers;
 [ApiController]
 [Route("api/games")]
 [Authorize]
-public class GamesController : ControllerBase
+public class GamesController(IGameRepository repo, PuzzleSummaryService summaryService) : ControllerBase
 {
-    private readonly IGameRepository _repo;
-    private readonly PuzzleSummaryService _summaryService;
-
-    public GamesController(IGameRepository repo, PuzzleSummaryService summaryService)
-    {
-        _repo = repo;
-        _summaryService = summaryService;
-    }
+    private readonly IGameRepository _repo = repo;
+    private readonly PuzzleSummaryService _summaryService = summaryService;
 
     [HttpGet("{date}")]
     public async Task<ActionResult<GameState>> GetGameState(string date)

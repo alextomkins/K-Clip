@@ -8,14 +8,9 @@ namespace KClip.Api.Controllers;
 [ApiController]
 [Route("api/profile")]
 [Authorize]
-public class ProfileController : ControllerBase
+public class ProfileController(IGameRepository repo) : ControllerBase
 {
-    private readonly IGameRepository _repo;
-
-    public ProfileController(IGameRepository repo)
-    {
-        _repo = repo;
-    }
+    private readonly IGameRepository _repo = repo;
 
     [HttpGet("visibility")]
     public async Task<ActionResult<VisibilityResponse>> GetVisibility()

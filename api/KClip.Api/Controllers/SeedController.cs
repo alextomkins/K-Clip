@@ -6,21 +6,14 @@ namespace KClip.Api.Controllers;
 
 [ApiController]
 [Route("api/dev/seed")]
-public class SeedController : ControllerBase
+public class SeedController(
+    IGameRepository repo,
+    PuzzleSummaryService summaryService,
+    IWebHostEnvironment env) : ControllerBase
 {
-    private readonly IGameRepository _repo;
-    private readonly PuzzleSummaryService _summaryService;
-    private readonly IWebHostEnvironment _env;
-
-    public SeedController(
-        IGameRepository repo,
-        PuzzleSummaryService summaryService,
-        IWebHostEnvironment env)
-    {
-        _repo = repo;
-        _summaryService = summaryService;
-        _env = env;
-    }
+    private readonly IGameRepository _repo = repo;
+    private readonly PuzzleSummaryService _summaryService = summaryService;
+    private readonly IWebHostEnvironment _env = env;
 
     [HttpPost]
     public async Task<IActionResult> Seed()

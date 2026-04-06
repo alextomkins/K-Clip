@@ -9,14 +9,9 @@ namespace KClip.Api.Controllers;
 [ApiController]
 [Route("api/stats")]
 [Authorize]
-public class StatsController : ControllerBase
+public class StatsController(IGameRepository repo) : ControllerBase
 {
-    private readonly IGameRepository _repo;
-
-    public StatsController(IGameRepository repo)
-    {
-        _repo = repo;
-    }
+    private readonly IGameRepository _repo = repo;
 
     [HttpGet]
     public async Task<ActionResult<StatsRecord>> GetStats()

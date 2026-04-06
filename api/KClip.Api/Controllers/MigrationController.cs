@@ -9,14 +9,9 @@ namespace KClip.Api.Controllers;
 [ApiController]
 [Route("api/migrate")]
 [Authorize]
-public class MigrationController : ControllerBase
+public class MigrationController(IGameRepository repo) : ControllerBase
 {
-    private readonly IGameRepository _repo;
-
-    public MigrationController(IGameRepository repo)
-    {
-        _repo = repo;
-    }
+    private readonly IGameRepository _repo = repo;
 
     [HttpPost]
     public async Task<IActionResult> Migrate([FromBody] MigrationRequest request)

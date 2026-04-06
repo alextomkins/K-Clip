@@ -6,14 +6,9 @@ namespace KClip.Api.Controllers;
 
 [ApiController]
 [Route("api/puzzles")]
-public class PuzzlesController : ControllerBase
+public class PuzzlesController(IGameRepository repo) : ControllerBase
 {
-    private readonly IGameRepository _repo;
-
-    public PuzzlesController(IGameRepository repo)
-    {
-        _repo = repo;
-    }
+    private readonly IGameRepository _repo = repo;
 
     [HttpGet("{date}/summary")]
     [ResponseCache(Duration = 30)]

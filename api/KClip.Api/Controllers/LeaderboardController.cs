@@ -8,14 +8,9 @@ namespace KClip.Api.Controllers;
 
 [ApiController]
 [Route("api/leaderboard")]
-public class LeaderboardController : ControllerBase
+public class LeaderboardController(LeaderboardService leaderboardService) : ControllerBase
 {
-    private readonly LeaderboardService _leaderboardService;
-
-    public LeaderboardController(LeaderboardService leaderboardService)
-    {
-        _leaderboardService = leaderboardService;
-    }
+    private readonly LeaderboardService _leaderboardService = leaderboardService;
 
     [HttpGet]
     [ResponseCache(Duration = 60, VaryByQueryKeys = ["limit"])]

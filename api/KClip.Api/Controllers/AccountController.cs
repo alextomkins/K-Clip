@@ -9,14 +9,9 @@ namespace KClip.Api.Controllers;
 [ApiController]
 [Route("api/account")]
 [Authorize]
-public class AccountController : ControllerBase
+public class AccountController(IGameRepository repo) : ControllerBase
 {
-    private readonly IGameRepository _repo;
-
-    public AccountController(IGameRepository repo)
-    {
-        _repo = repo;
-    }
+    private readonly IGameRepository _repo = repo;
 
     [HttpDelete]
     public async Task<IActionResult> DeleteAccount()
