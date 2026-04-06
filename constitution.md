@@ -92,12 +92,41 @@ https://alextomkins.github.io/K-Clip/ 🎵
 
 * Framework: ASP.NET Web API (C# / .NET 10)
 * Hosting: Google Cloud Run (australia-southeast1)
-* Database: Cloud Firestore (server-side access only via `Google.Cloud.Firestore` SDK)
+* Database: Cloud Firestore (database ID: `k-clip`, server-side access only via `Google.Cloud.Firestore` SDK)
 * Auth validation: Firebase Admin SDK (`FirebaseAdmin`) — custom `AuthenticationHandler` validates Firebase ID tokens
 * Container: Dockerfile based on `mcr.microsoft.com/dotnet/aspnet:10.0`
 * CORS: Configured for GitHub Pages origin + localhost dev
 * Swagger/OpenAPI: Enabled in development mode
 * Response caching: Leaderboard (60s), puzzle summaries (30s)
+
+### Deployment
+
+Both frontend and backend deploy automatically via GitHub Actions on push to `master`.
+
+**Frontend** (`.github/workflows/deploy.yml`):
+* Triggers on any push to `master`
+* Builds with Vite, injecting Firebase + API secrets as env vars
+* Deploys static output to GitHub Pages via `peaceiris/actions-gh-pages`
+
+**Backend** (`.github/workflows/deploy-api.yml`):
+* Triggers on push to `master` only when `api/**` files change
+* Authenticates to GCP via Workload Identity Federation (no long-lived keys)
+* Deploys to Cloud Run from source (`gcloud run deploy --source`)
+* Sets env vars: `GOOGLE_CLOUD_PROJECT`, `FIRESTORE_DATABASE_ID`, `ASPNETCORE_URLS`
+
+**Required GitHub Secrets:**
+
+| Secret | Purpose |
+|--------|----------------------------|
+| `VITE_FIREBASE_API_KEY` | Firebase client config |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase client config |
+| `VITE_FIREBASE_PROJECT_ID` | Firebase client config |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase client config |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase client config |
+| `VITE_FIREBASE_APP_ID` | Firebase client config |
+| `VITE_API_BASE_URL` | Cloud Run service URL |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload Identity provider |
+| `GCP_SERVICE_ACCOUNT` | GCP service account email |
 
 ### Audio Handling
 
@@ -387,7 +416,7 @@ These are **explicitly NOT required now**, but should influence design decisions
 * Multiple difficulty modes
 * Obfuscation or protection of answers
 * **Firebase Hosting Migration** — Move from GitHub Pages to Firebase Hosting (remove `/K-Clip/` base path, update share URL, remove CORS config)
-* **CI/CD & Branching Strategy** — Move away from pushing directly to `main`. Adopt a branching model (e.g. feature branches with PRs) and set up a CI/CD pipeline to automate linting, testing, and deployment.
+* **CI/CD & Branching Strategy** — Move away from pushing directly to `master`. Adopt a branching model (e.g. feature branches with PRs) and add linting/testing to the CI pipeline.
 * **Unit Testing** — Add unit test coverage across utility functions, hooks, and components (e.g. with Vitest + React Testing Library).
 * **End-to-End Testing** — Introduce Playwright for E2E tests covering core user flows (daily puzzle play, guess submission, result sharing, archive navigation).
 * **Future SQL Migration** — Repository pattern enables swapping Firestore for PostgreSQL (e.g. Cloud SQL, Supabase) with one DI registration change.

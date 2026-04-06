@@ -85,10 +85,18 @@ npm run lint
 
 # Build for production
 npm run build
-
-# Deploy frontend to GitHub Pages
-npm run deploy
 ```
+
+## Deployment
+
+Both frontend and backend deploy automatically via GitHub Actions on push to `master`.
+
+- **Frontend** → GitHub Pages (triggers on any push to `master`)
+- **Backend** → Google Cloud Run (triggers only when `api/**` files change)
+
+GCP authentication uses [Workload Identity Federation](https://cloud.google.com/iam/docs/workload-identity-federation) — no service account keys needed.
+
+See `.github/workflows/` for the full workflow definitions.
 
 ## Project Structure
 
