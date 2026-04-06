@@ -1,6 +1,7 @@
 import { LeaderboardEntry } from '../types'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useLeaderboard } from '../hooks/useLeaderboard'
+import { Modal } from './Modal'
 
 const MIN_GAMES = 5
 
@@ -27,24 +28,7 @@ export function LeaderboardModal({ isOpen, onClose }: LeaderboardModalProps) {
   const isUnqualified = currentUser ? currentUser.played < MIN_GAMES : false
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="bg-gray-800 rounded-xl w-full max-w-md p-6 relative max-h-[80vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-4 text-gray-400 hover:text-white text-xl leading-none"
-          aria-label="Close"
-        >
-          ✕
-        </button>
-
+    <Modal isOpen={isOpen} onClose={onClose} maxWidth="max-w-md">
         <h2 className="text-xl font-bold mb-1 text-center">🏆 Leaderboard</h2>
         <p className="text-gray-500 text-xs text-center mb-4">Minimum {MIN_GAMES} games played</p>
 
@@ -117,8 +101,7 @@ export function LeaderboardModal({ isOpen, onClose }: LeaderboardModalProps) {
             </button>
           </div>
         )}
-      </div>
-    </div>
+    </Modal>
   )
 }
 

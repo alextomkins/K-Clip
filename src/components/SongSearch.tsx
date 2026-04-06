@@ -5,7 +5,7 @@ interface SongSearchProps {
   songs: Song[]
   onGuess: (songId: string) => void
   onSkip: () => void
-  guessedSongIds: string[]
+  guessedSongIds: Set<string>
 }
 
 export function SongSearch({ songs, onGuess, onSkip, guessedSongIds }: SongSearchProps) {
@@ -17,7 +17,7 @@ export function SongSearch({ songs, onGuess, onSkip, guessedSongIds }: SongSearc
   const listRef = useRef<HTMLUListElement>(null)
 
   const availableSongs = useMemo(
-    () => songs.filter((s) => !guessedSongIds.includes(s.id)),
+    () => songs.filter((s) => !guessedSongIds.has(s.id)),
     [songs, guessedSongIds]
   )
 

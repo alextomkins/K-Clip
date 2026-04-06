@@ -87,6 +87,11 @@ export const api = {
     return handleResponse<T>(res)
   },
 
+  async getPublic<T>(path: string): Promise<T> {
+    const res = await fetch(`${BASE_URL}${path}`)
+    return handleResponse<T>(res)
+  },
+
   async post<T>(path: string, body?: unknown): Promise<T> {
     const headers = await getAuthHeaders()
     try {

@@ -1,30 +1,13 @@
+import { Modal } from './Modal'
+
 interface HowToPlayProps {
   isOpen: boolean
   onClose: () => void
 }
 
 export function HowToPlay({ isOpen, onClose }: HowToPlayProps) {
-  if (!isOpen) return null
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="bg-gray-800 rounded-xl w-full max-w-sm p-6 relative"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-4 text-gray-400 hover:text-white text-xl leading-none"
-          aria-label="Close"
-        >
-          ✕
-        </button>
-
+    <Modal isOpen={isOpen} onClose={onClose}>
         <h2 className="text-xl font-bold mb-4 text-center">How to Play</h2>
 
         <ul className="text-sm text-gray-300 space-y-2 mb-6 list-disc list-inside">
@@ -56,7 +39,6 @@ export function HowToPlay({ isOpen, onClose }: HowToPlayProps) {
             <span className="text-gray-300">Unused guess</span>
           </div>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

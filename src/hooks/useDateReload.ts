@@ -6,10 +6,15 @@ export function useDateReload(isToday: boolean) {
 
   useEffect(() => {
     if (!isToday) return
-    const onFocus = () => {
+    const check = () => {
       if (getTodayAEST() !== today) window.location.reload()
     }
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
+    window.addEventListener('focus', check)
+    // Also poll periodically for active-tab midnight rollover
+    const id = setInterval(check, 60_000)
+    return () => {
+      window.removeEventListener('focus', check)
+      clearInterval(id)
+    }
   }, [today, isToday])
 }

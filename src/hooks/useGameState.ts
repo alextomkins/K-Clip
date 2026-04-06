@@ -120,21 +120,15 @@ export function useGameState(date: string) {
       return newState
     })
     if (guess.result === 'correct') setJustWon(true)
-  }, [user])
 
-  // Log guess and game_end events
-  const prevGuessCount = useRef(gameState.guesses.length)
-  useEffect(() => {
-    const count = gameState.guesses.length
-    if (count > prevGuessCount.current) {
-      const latest = gameState.guesses[count - 1]
-      logGuess(puzzle.dayNumber, count, latest.result)
-      if (gameState.status === 'won' || gameState.status === 'lost') {
-        logGameEnd(puzzle.dayNumber, gameState.status, count)
-      }
+    // Log analytics events imperatively
+    logGuess(puzzle.dayNumber, gameState.guesses.length + 1, guess.result)
+    if (guess.result === 'correct') {
+      logGameEnd(puzzle.dayNumber, 'won', gameState.guesses.length + 1)
+    } else if (gameState.guesses.length + 1 >= MAX_GUESSES) {
+      logGameEnd(puzzle.dayNumber, 'lost', gameState.guesses.length + 1)
     }
-    prevGuessCount.current = count
-  }, [gameState.guesses, gameState.status, puzzle.dayNumber])
+  }, [user, puzzle.dayNumber, gameState.guesses.length])
 
   const submitGuess = useCallback((songId: string) => {
     const isCorrect = songId === puzzle.song.id

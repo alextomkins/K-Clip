@@ -68,7 +68,7 @@ After the game ends:
 🟩🟥🟥⬜⬜⬜
 Guessed in 1/6
 
-alextomkins.github.io/K-Clip/ 🎵
+https://alextomkins.github.io/K-Clip/ 🎵
 ```
 
 * Emoji key: 🟩 correct, 🟧 partial (right artist), 🟥 incorrect or skipped, ⬜ unused
