@@ -38,34 +38,55 @@ alextomkins.github.io/K-Clip/ 🎵
 - 📅 **New puzzle every day** at midnight AEST
 - 🗂️ **Puzzle archive** — browse and play any past day
 - 📊 **Stats tracking** — win %, streaks, guess distribution
+- 🏆 **Leaderboard** — compete with friends for the best win rate
 - 📋 **Shareable results** — copy your score to clipboard
+- 🔐 **Google Sign-In** — sync progress across devices (optional)
+- 📈 **Community stats** — see the daily average guesses and player count
 - 🎉 **Confetti** on a correct guess
-- 📱 **Mobile-first** responsive design
+- 📱 **Mobile-first** responsive PWA
 
 ## Tech Stack
+
+### Frontend
 
 - **React 19** + **TypeScript 5**
 - **Vite** for builds
 - **Tailwind CSS 3** for styling
+- **Firebase Auth** (Google Sign-In)
 - **Firebase Storage** for audio hosting
+- **Firebase Analytics** for event tracking
+- **vite-plugin-pwa** for offline support
 - **GitHub Pages** for hosting
+
+### Backend
+
+- **ASP.NET Web API** (.NET 10 / C#)
+- **Cloud Firestore** for data storage
+- **Google Cloud Run** for hosting
+- **Firebase Admin SDK** for auth validation
 
 ## Development
 
 ```bash
-# Install dependencies
+# Frontend
 npm install
-
-# Start dev server
 npm run dev
 
+# Backend
+cd api/KClip.Api
+dotnet run
+```
+
+### Other Commands
+
+```bash
 # Lint
 npm run lint
 
 # Build for production
 npm run build
 
-# Deploy to GitHub Pages
+# Deploy frontend to GitHub Pages
 npm run deploy
 ```
 
@@ -74,11 +95,18 @@ npm run deploy
 ```
 src/
   components/    # React UI components
+  contexts/      # Auth context provider
   data/          # Song list
-  hooks/         # Custom React hooks (audio, game state, countdown)
-  lib/           # Firebase init & storage helpers
+  hooks/         # Custom React hooks
+  lib/           # Firebase, API client, analytics, storage
   types/         # TypeScript type definitions
   utils/         # Puzzle selection, sharing, localStorage
+api/
+  KClip.Api/
+    Controllers/ # REST API endpoints
+    Models/      # C# data models (Firestore-mapped)
+    Services/    # Repository, leaderboard, aggregation
+    Auth/        # Firebase JWT validation
 public/          # Static assets (icons, favicon)
 ```
 

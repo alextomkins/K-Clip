@@ -1,17 +1,17 @@
-import { StatsRecord, DistributionKey } from '../types'
+import { StatsRecord, DistributionKey, PuzzleSummary } from '../types'
+import { Modal } from './Modal'
 
 interface StatsModalProps {
   stats: StatsRecord
   isOpen: boolean
   onClose: () => void
   lastResultKey: DistributionKey | null
+  puzzleSummary: PuzzleSummary | null
 }
 
 const DIST_KEYS: DistributionKey[] = ['1', '2', '3', '4', '5', '6', 'X']
 
-export function StatsModal({ stats, isOpen, onClose, lastResultKey }: StatsModalProps) {
-  if (!isOpen) return null
-
+export function StatsModal({ stats, isOpen, onClose, lastResultKey, puzzleSummary }: StatsModalProps) {
   const winPct = stats.played === 0 ? 0 : Math.round((stats.wins / stats.played) * 100)
   const maxVal = Math.max(...DIST_KEYS.map((k) => stats.guessDistribution[k]), 1)
 
@@ -23,24 +23,7 @@ export function StatsModal({ stats, isOpen, onClose, lastResultKey }: StatsModal
   ]
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="bg-gray-800 rounded-xl w-full max-w-sm p-6 relative"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-4 text-gray-400 hover:text-white text-xl leading-none"
-          aria-label="Close"
-        >
-          ✕
-        </button>
-
+    <Modal isOpen={isOpen} onClose={onClose}>
         <h2 className="text-xl font-bold mb-4 text-center">Statistics</h2>
 
         {/* Stat tiles */}
@@ -83,7 +66,25 @@ export function StatsModal({ stats, isOpen, onClose, lastResultKey }: StatsModal
             )
           })}
         </div>
-      </div>
-    </div>
+
+        {/* Community average for today */}
+        {puzzleSummary && lastResultKey && (
+          <div className="mt-5 p-3 bg-gray-700/50 rounded-lg text-sm text-gray-300">
+            <p className="font-semibold text-gray-400 text-xs uppercase tracking-wide mb-1">Today's Community</p>
+            <p>
+              Average: <span className="font-bold text-white">{puzzleSummary.avgGuesses.toFixed(1)}</span> guesses
+              {lastResultKey !== 'X' && (
+                <>
+                  <span className="text-gray-500"> · </span>
+                  You: <span className="font-bold text-white">{lastResultKey}</span>
+                </>
+              )}
+            </p>
+            <p className="text-gray-500 text-xs mt-0.5">
+              {puzzleSummary.totalPlays} player{puzzleSummary.totalPlays !== 1 ? 's' : ''} · {puzzleSummary.winCount} win{puzzleSummary.winCount !== 1 ? 's' : ''}
+            </p>
+          </div>
+        )}
+    </Modal>
   )
 }

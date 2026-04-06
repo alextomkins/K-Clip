@@ -46,3 +46,30 @@ export interface StatsRecord {
   lastPlayedDate: string | null
   lastWonDate: string | null
 }
+
+export interface PuzzleSummary {
+  totalPlays: number
+  totalGuesses: number
+  avgGuesses: number
+  winCount: number
+  distribution: Record<string, number>
+}
+
+export interface LeaderboardEntry {
+  uid: string
+  displayName: string
+  photoURL: string | null
+  played: number
+  wins: number
+  winPct: number
+  currentStreak: number
+  maxStreak: number
+  avgGuesses: number
+  rank: number
+}
+
+export interface LeaderboardResponse {
+  entries: LeaderboardEntry[]
+  currentUser: LeaderboardEntry | null
+  currentUserHidden: boolean
+}

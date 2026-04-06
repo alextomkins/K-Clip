@@ -1,16 +1,20 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
-import { GameState, Guess, GuessResult, DailyPuzzle, MAX_GUESSES, CLIP_DURATIONS } from '../types'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { GameState, Guess, GuessResult, DailyPuzzle, PuzzleSummary, MAX_GUESSES, CLIP_DURATIONS } from '../types'
 import { getTodayAEST, getDailyPuzzle } from '../utils/puzzle'
 import { loadGameState, saveGameState } from '../utils/storage'
 import { useStats } from './useStats'
 import { useDateReload } from './useDateReload'
+import { useAuthContext } from '../contexts/AuthContext'
 import { songLookup } from '../data/songs'
+import { logGameStart, logGuess, logGameEnd } from '../lib/analytics'
+import { api } from '../lib/api'
 
 function createInitialState(date: string): GameState {
   return { date, guesses: [], status: 'playing' }
 }
 
 export function useGameState(date: string) {
+  const { user } = useAuthContext()
   const today = useMemo(() => getTodayAEST(), [])
   const isToday = date === today
   const puzzle: DailyPuzzle = useMemo(() => getDailyPuzzle(date), [date])
@@ -20,15 +24,64 @@ export function useGameState(date: string) {
   })
 
   const [justWon, setJustWon] = useState(false)
+  const [puzzleSummary, setPuzzleSummary] = useState<PuzzleSummary | null>(null)
+  const [loading, setLoading] = useState(false)
 
   const stats = useStats(date, gameState)
   useDateReload(isToday)
 
-  // Reset state when the selected date changes
+  // Load game state from API when authenticated, falling back to localStorage
   useEffect(() => {
-    setGameState(loadGameState(date) ?? createInitialState(date))
+    // Always immediately show cached/local state to avoid stale data flash
+    const local = loadGameState(date) ?? createInitialState(date)
+    setGameState(local)
     setJustWon(false)
-  }, [date])
+    setPuzzleSummary(null)
+
+    if (!user) return
+
+    setLoading(true)
+    let cancelled = false
+    api.get<GameState>(`/api/games/${date}`)
+      .then((remote) => {
+        if (!cancelled) {
+          saveGameState(remote) // cache locally
+          setGameState(remote)
+        }
+      })
+      .catch(() => {
+        // API unavailable or 404 — local state already set
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [date, user])
+
+  // Fetch puzzle summary for completed games when authenticated
+  useEffect(() => {
+    if (!user || gameState.status === 'playing') {
+      setPuzzleSummary(null)
+      return
+    }
+    let cancelled = false
+    api.get<PuzzleSummary>(`/api/puzzles/${date}/summary`)
+      .then((summary) => {
+        if (!cancelled && summary.totalPlays > 0) setPuzzleSummary(summary)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [user, date, gameState.status])
+
+  // Log game_start when a fresh puzzle is opened
+  const loggedStart = useRef<string | null>(null)
+  useEffect(() => {
+    if (gameState.status === 'playing' && gameState.guesses.length === 0 && loggedStart.current !== date) {
+      loggedStart.current = date
+      logGameStart(puzzle.dayNumber, date)
+    }
+  }, [date, gameState.status, gameState.guesses.length, puzzle.dayNumber])
 
   const currentClipIndex =
     gameState.status === 'won'
@@ -47,10 +100,35 @@ export function useGameState(date: string) {
         status: guess.result === 'correct' ? 'won' : isLastGuess ? 'lost' : 'playing',
       }
       saveGameState(newState)
+
+      // Sync to API when authenticated
+      if (user) {
+        api.put(`/api/games/${newState.date}`, newState).catch(() => {})
+
+        // Submit final result for aggregation when game ends
+        if (newState.status === 'won' || newState.status === 'lost') {
+          api.post<PuzzleSummary>(`/api/games/${newState.date}/complete`, {
+            displayName: user.displayName ?? 'Anonymous',
+            guessCount: newState.guesses.length,
+            status: newState.status,
+          })
+            .then((summary) => { if (summary.totalPlays > 0) setPuzzleSummary(summary) })
+            .catch(() => {})
+        }
+      }
+
       return newState
     })
     if (guess.result === 'correct') setJustWon(true)
-  }, [])
+
+    // Log analytics events imperatively
+    logGuess(puzzle.dayNumber, gameState.guesses.length + 1, guess.result)
+    if (guess.result === 'correct') {
+      logGameEnd(puzzle.dayNumber, 'won', gameState.guesses.length + 1)
+    } else if (gameState.guesses.length + 1 >= MAX_GUESSES) {
+      logGameEnd(puzzle.dayNumber, 'lost', gameState.guesses.length + 1)
+    }
+  }, [user, puzzle.dayNumber, gameState.guesses.length])
 
   const submitGuess = useCallback((songId: string) => {
     const isCorrect = songId === puzzle.song.id
@@ -73,11 +151,13 @@ export function useGameState(date: string) {
   return {
     puzzle,
     gameState,
+    loading,
     currentClipIndex,
     attemptsRemaining,
     submitGuess,
     skipGuess,
     justWon,
     stats,
+    puzzleSummary,
   }
 }

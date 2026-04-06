@@ -2,8 +2,11 @@ import { useState, useEffect, useMemo } from 'react'
 import { GameState, StatsRecord, DistributionKey } from '../types'
 import { getTodayAEST, getDayNumber } from '../utils/puzzle'
 import { loadStats, saveStats } from '../utils/storage'
+import { useAuthContext } from '../contexts/AuthContext'
+import { api } from '../lib/api'
 
 export function useStats(date: string, gameState: GameState) {
+  const { user } = useAuthContext()
   const today = useMemo(() => getTodayAEST(), [])
   const isToday = date === today
 
@@ -19,6 +22,21 @@ export function useStats(date: string, gameState: GameState) {
     }
     return loaded
   })
+
+  // Load stats from API when authenticated
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    api.get<StatsRecord>('/api/stats')
+      .then((remote) => {
+        if (!cancelled) {
+          saveStats(remote) // cache locally
+          setStats(remote)
+        }
+      })
+      .catch(() => {}) // fallback to local stats
+    return () => { cancelled = true }
+  }, [user])
 
   useEffect(() => {
     if (!isToday) return
@@ -59,9 +77,12 @@ export function useStats(date: string, gameState: GameState) {
         lastWonDate: isWin ? today : prev.lastWonDate,
       }
       saveStats(newStats)
+      if (user) {
+        api.put('/api/stats', newStats).catch(() => {})
+      }
       return newStats
     })
-  }, [gameState, isToday, today])
+  }, [gameState, isToday, today, user])
 
   return stats
 }

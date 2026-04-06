@@ -9,6 +9,10 @@ node_modules/
 # Build output
 dist/
 
+# .NET build output
+**/bin/
+**/obj/
+
 # Editor
 .vscode/*
 !.vscode/extensions.json
@@ -25,3 +29,6 @@ Thumbs.db
 
 # Schedule
 song-schedule.md
+
+# Songs
+songs/

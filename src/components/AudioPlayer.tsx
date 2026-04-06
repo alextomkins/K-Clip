@@ -1,12 +1,20 @@
+import { useState, useEffect } from 'react'
 import { useAudioPlayer } from '../hooks/useAudioPlayer'
 import { CLIP_DURATIONS } from '../types'
+import { getAudioUrl } from '../lib/storage'
 
 interface AudioPlayerProps {
-  audioSrc: string | null
+  audioFile: string
   clipIndex: number
 }
 
-export function AudioPlayer({ audioSrc, clipIndex }: AudioPlayerProps) {
+export function AudioPlayer({ audioFile, clipIndex }: AudioPlayerProps) {
+  const [audioSrc, setAudioSrc] = useState<string | null>(null)
+  useEffect(() => {
+    setAudioSrc(null)
+    getAudioUrl(audioFile).then(setAudioSrc)
+  }, [audioFile])
+
   const maxDuration = CLIP_DURATIONS[CLIP_DURATIONS.length - 1]
   const clipDuration = CLIP_DURATIONS[clipIndex]
   const { isPlaying, progress, error, play, stop } = useAudioPlayer({
