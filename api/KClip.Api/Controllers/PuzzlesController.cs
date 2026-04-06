@@ -1,13 +1,11 @@
 using KClip.Api.Models;
 using KClip.Api.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KClip.Api.Controllers;
 
 [ApiController]
 [Route("api/puzzles")]
-[Authorize]
 public class PuzzlesController : ControllerBase
 {
     private readonly IGameRepository _repo;

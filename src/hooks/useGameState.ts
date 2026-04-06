@@ -59,20 +59,20 @@ export function useGameState(date: string) {
     return () => { cancelled = true }
   }, [date, user])
 
-  // Fetch puzzle summary for completed games when authenticated
+  // Fetch puzzle summary for completed games
   useEffect(() => {
-    if (!user || gameState.status === 'playing') {
+    if (gameState.status === 'playing') {
       setPuzzleSummary(null)
       return
     }
     let cancelled = false
-    api.get<PuzzleSummary>(`/api/puzzles/${date}/summary`)
+    api.getPublic<PuzzleSummary>(`/api/puzzles/${date}/summary`)
       .then((summary) => {
         if (!cancelled && summary.totalPlays > 0) setPuzzleSummary(summary)
       })
       .catch(() => {})
     return () => { cancelled = true }
-  }, [user, date, gameState.status])
+  }, [date, gameState.status])
 
   // Log game_start when a fresh puzzle is opened
   const loggedStart = useRef<string | null>(null)
