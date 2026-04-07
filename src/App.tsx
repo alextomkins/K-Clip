@@ -10,6 +10,7 @@ import { HowToPlay } from './components/HowToPlay'
 import { StatsModal } from './components/StatsModal'
 import { LeaderboardModal } from './components/LeaderboardModal'
 import { useToast, ToastContainer } from './components/Toast'
+import { UpdatePrompt } from './components/UpdatePrompt'
 import { setApiErrorHandler } from './lib/api'
 import { CLIP_DURATIONS, DistributionKey } from './types'
 import { getTodayAEST, getDayNumber, getDateForDay } from './utils/puzzle'
@@ -180,6 +181,7 @@ function App() {
         <p>v{__APP_VERSION__}</p>
       </footer>
 
+      <UpdatePrompt />
       <ToastContainer toasts={toasts} />
     </div>
   )

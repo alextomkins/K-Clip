@@ -103,10 +103,10 @@ export function Header({ onShowHowToPlay, onShowStats, onShowLeaderboard, showTo
         ) : (
           <button
             onClick={signIn}
-            className="text-gray-400 hover:text-white text-xl leading-none"
+            className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold px-3 py-1.5 rounded-full transition-colors"
             aria-label="Sign in"
           >
-            👤
+            👤 Sign in
           </button>
         )
       )}
