@@ -13,7 +13,7 @@ public class LeaderboardController(LeaderboardService leaderboardService) : Cont
     private readonly LeaderboardService _leaderboardService = leaderboardService;
 
     [HttpGet]
-    [ResponseCache(Duration = 60, VaryByQueryKeys = ["limit"])]
+    [ResponseCache(Duration = 60, VaryByQueryKeys = ["limit"], VaryByHeader = "Authorization")]
     public async Task<ActionResult<LeaderboardResponse>> GetLeaderboard(
         [FromQuery] int limit = 10)
     {
