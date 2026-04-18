@@ -19,7 +19,7 @@ public class LeaderboardService
         // Build ranked list from all qualifying users (including hidden)
         var allRanked = allStats
             .Where(s => s.Stats.Played >= MinGamesPlayed)
-            .Select(s => BuildEntry(s))
+            .Select(BuildEntry)
             .OrderByDescending(e => e.WinPct)
             .ThenBy(e => e.AvgGuesses)
             .ThenByDescending(e => e.MaxStreak)
@@ -31,8 +31,8 @@ public class LeaderboardService
         var visibleRanked = allRanked
             .Where(e =>
             {
-                var data = allStats.First(s => s.Uid == e.Uid);
-                return !(data.Profile?.HideFromLeaderboard ?? false);
+                var (Uid, Stats, Profile) = allStats.First(s => s.Uid == e.Uid);
+                return !(Profile?.HideFromLeaderboard ?? false);
             })
             .Select((e, i) => { var copy = CloneEntry(e); copy.Rank = i + 1; return copy; })
             .ToList();

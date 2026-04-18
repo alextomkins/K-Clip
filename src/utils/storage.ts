@@ -1,4 +1,4 @@
-import { GameState, StatsRecord } from '../types'
+import { GameState, Song, StatsRecord } from '../types'
 
 function storageKey(date: string): string {
   return `kclip-state-${date}`
@@ -54,4 +54,24 @@ export function loadStats(): StatsRecord {
 
 export function saveStats(stats: StatsRecord): void {
   localStorage.setItem(STATS_KEY, JSON.stringify(stats))
+}
+
+function answerKey(date: string): string {
+  return `kclip-answer-${date}`
+}
+
+export function loadAnswerSong(date: string): Song | null {
+  try {
+    const raw = localStorage.getItem(answerKey(date))
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (typeof parsed?.id !== 'string' || typeof parsed?.title !== 'string' || typeof parsed?.artist !== 'string') return null
+    return parsed as Song
+  } catch {
+    return null
+  }
+}
+
+export function saveAnswerSong(date: string, song: Song): void {
+  localStorage.setItem(answerKey(date), JSON.stringify(song))
 }

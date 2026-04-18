@@ -29,6 +29,7 @@ Thumbs.db
 
 # Schedule
 song-schedule.md
+api/KClip.Api/Data/puzzle-schedule.json
 
 # Songs
 songs/

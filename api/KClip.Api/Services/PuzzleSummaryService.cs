@@ -2,14 +2,9 @@ using KClip.Api.Models;
 
 namespace KClip.Api.Services;
 
-public class PuzzleSummaryService
+public class PuzzleSummaryService(IGameRepository repo)
 {
-    private readonly IGameRepository _repo;
-
-    public PuzzleSummaryService(IGameRepository repo)
-    {
-        _repo = repo;
-    }
+    private readonly IGameRepository _repo = repo;
 
     public async Task<PuzzleSummary> RecomputeSummary(string date)
     {

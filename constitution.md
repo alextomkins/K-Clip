@@ -420,6 +420,7 @@ These are **explicitly NOT required now**, but should influence design decisions
 * **Unit Testing** — Add unit test coverage across utility functions, hooks, and components (e.g. with Vitest + React Testing Library).
 * **End-to-End Testing** — Introduce Playwright for E2E tests covering core user flows (daily puzzle play, guess submission, result sharing, archive navigation).
 * **Future SQL Migration** — Repository pattern enables swapping Firestore for PostgreSQL (e.g. Cloud SQL, Supabase) with one DI registration change.
+* **Signed Guess Chain** — The guess endpoint is stateless and unauthenticated, so a caller can fabricate `previousGuessIds` to force a game-over and retrieve the answer. A future improvement would have the server return a HMAC-signed token encoding the guess history with each response; the client sends the token back on the next guess, and the server verifies it before evaluating. This prevents answer extraction without adding auth requirements or database reads.
 
 ---
 

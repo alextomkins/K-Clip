@@ -4,6 +4,7 @@ using Google.Cloud.Firestore;
 using KClip.Api.Auth;
 using KClip.Api.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +56,18 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddResponseCaching();
 builder.Services.AddControllers();
+
+// Rate limiting: 10 requests per minute per IP for guess/answer endpoints
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("guess", limiter =>
+    {
+        limiter.PermitLimit = 10;
+        limiter.Window = TimeSpan.FromMinutes(1);
+        limiter.QueueLimit = 0;
+    });
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -93,6 +106,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 app.UseResponseCaching();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
