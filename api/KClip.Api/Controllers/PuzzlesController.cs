@@ -33,8 +33,8 @@ public class PuzzlesController(IGameRepository repo) : ControllerBase
         if (string.Compare(date, todayAest, StringComparison.Ordinal) > 0)
             return BadRequest("Cannot guess for future puzzles");
 
-        // Validate songId exists
-        if (!PuzzleService.SongLookup.ContainsKey(request.SongId))
+        // Validate songId exists (empty string = skip)
+        if (request.SongId != "" && !PuzzleService.SongLookup.ContainsKey(request.SongId))
             return BadRequest("Unknown songId");
 
         // Validate previous guesses
@@ -55,8 +55,8 @@ public class PuzzlesController(IGameRepository repo) : ControllerBase
                 return BadRequest("Game already completed — a previous guess was correct");
         }
 
-        // Evaluate the current guess
-        var result = PuzzleService.EvaluateGuess(request.SongId, answer);
+        // Evaluate the current guess (skip = incorrect)
+        var result = request.SongId == "" ? "incorrect" : PuzzleService.EvaluateGuess(request.SongId, answer);
         var guessCount = request.PreviousGuessIds.Count + 1;
         var isGameOver = result == "correct" || guessCount >= MaxGuesses;
 
