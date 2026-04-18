@@ -133,7 +133,7 @@ public class FirestoreGameRepository : IGameRepository
         }
 
         return userIds
-            .Where(uid => statsByUid.ContainsKey(uid))
+            .Where(statsByUid.ContainsKey)
             .Select(uid => (
                 uid,
                 statsByUid[uid],

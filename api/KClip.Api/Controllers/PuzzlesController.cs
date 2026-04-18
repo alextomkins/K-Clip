@@ -1,6 +1,7 @@
 using KClip.Api.Models;
 using KClip.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace KClip.Api.Controllers;
 
@@ -19,27 +20,8 @@ public class PuzzlesController(IGameRepository repo) : ControllerBase
         return summary is null ? Ok(new PuzzleSummary()) : Ok(summary);
     }
 
-    [HttpGet("{date}/answer")]
-    public ActionResult<SongAnswer> GetAnswer(string date)
-    {
-        if (!DateOnly.TryParse(date, out _))
-            return BadRequest("Invalid date format");
-
-        // Only reveal answers for today or earlier (AEST)
-        var todayAest = PuzzleService.GetTodayAest();
-        if (string.Compare(date, todayAest, StringComparison.Ordinal) > 0)
-            return BadRequest("Cannot reveal answer for future puzzles");
-
-        var answer = PuzzleService.GetPuzzleSong(date);
-        return Ok(new SongAnswer
-        {
-            SongId = answer.Id,
-            Title = answer.Title,
-            Artist = answer.Artist,
-        });
-    }
-
     [HttpPost("{date}/guess")]
+    [EnableRateLimiting("guess")]
     public ActionResult<GuessResponse> SubmitGuess(string date, [FromBody] GuessRequest request)
     {
         // Validate date format

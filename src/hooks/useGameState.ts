@@ -77,18 +77,23 @@ export function useGameState(date: string) {
 
   // Fetch answer from API when game is completed but answer is missing (e.g. pre-migration games)
   useEffect(() => {
-    if (gameState.status === 'playing' || answerSong) return
+    if (gameState.status === 'playing' || answerSong || gameState.guesses.length === 0) return
     let cancelled = false
-    api.getPublic<{ songId: string; title: string; artist: string }>(`/api/puzzles/${date}/answer`)
-      .then((data) => {
-        if (cancelled) return
-        const song: Song = { id: data.songId, title: data.title, artist: data.artist }
-        setAnswerSong(song)
-        saveAnswerSong(date, song)
+
+    // Replay the final guess to retrieve the answer from the server
+    api.postPublic<GuessResponse>(`/api/puzzles/${date}/guess`, {
+      songId: gameState.guesses[gameState.guesses.length - 1].songId,
+      previousGuessIds: gameState.guesses.slice(0, -1).map((g) => g.songId),
+    })
+      .then((resp) => {
+        if (cancelled || !resp.answer) return
+        setAnswerSong(resp.answer)
+        saveAnswerSong(date, resp.answer)
       })
       .catch(() => {})
+
     return () => { cancelled = true }
-  }, [date, gameState.status, answerSong])
+  }, [date, gameState.status, answerSong, gameState.guesses])
 
   // Log game_start when a fresh puzzle is opened
   const loggedStart = useRef<string | null>(null)

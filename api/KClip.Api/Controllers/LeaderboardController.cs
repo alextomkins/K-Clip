@@ -1,7 +1,6 @@
 using KClip.Api.Auth;
 using KClip.Api.Models;
 using KClip.Api.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KClip.Api.Controllers;
