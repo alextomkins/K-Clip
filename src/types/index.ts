@@ -2,7 +2,6 @@ export interface Song {
   id: string
   title: string
   artist: string
-  audioFile: string
 }
 
 export type GuessResult = 'correct' | 'partial' | 'incorrect' | 'skipped'

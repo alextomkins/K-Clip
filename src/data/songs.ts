@@ -10,7 +10,6 @@ function toSlug(text: string): string {
 interface SongEntry {
   title: string
   artist: string
-  audioFile?: string
 }
 
 const songEntries: SongEntry[] = [
@@ -211,7 +210,6 @@ const songs: Song[] = songEntries
       id,
       title: entry.title,
       artist: entry.artist,
-      audioFile: entry.audioFile ?? `${toSlug(entry.artist)}-${toSlug(entry.title)}.mp3`,
     }
   })
 
