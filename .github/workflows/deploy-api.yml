@@ -34,7 +34,9 @@ jobs:
           node-version: 20
 
       - name: Generate puzzle schedule
-        run: node scripts/generate-puzzle-schedule.mjs > api/KClip.Api/Data/puzzle-schedule.json
+        run: |
+          mkdir -p api/KClip.Api/Data
+          node scripts/generate-puzzle-schedule.mjs > api/KClip.Api/Data/puzzle-schedule.json
 
       - name: Deploy to Cloud Run
         run: |
