@@ -10,7 +10,7 @@ export function setApiErrorHandler(handler: ErrorHandler) {
 }
 
 let lastNotifyTime = 0
-function notifyError(message: string) {
+export function notifyError(message: string) {
   const now = Date.now()
   if (now - lastNotifyTime < 1000) return // debounce duplicate toasts
   lastNotifyTime = now

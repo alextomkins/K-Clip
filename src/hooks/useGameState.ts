@@ -6,7 +6,7 @@ import { useStats } from './useStats'
 import { useDateReload } from './useDateReload'
 import { useAuthContext } from '../contexts/AuthContext'
 import { logGameStart, logGuess, logGameEnd } from '../lib/analytics'
-import { api } from '../lib/api'
+import { api, notifyError as notifyApiError } from '../lib/api'
 
 function createInitialState(date: string): GameState {
   return { date, guesses: [], status: 'playing' }
@@ -168,7 +168,7 @@ export function useGameState(date: string) {
       const result: GuessResult = resp.result
       applyGuess({ songId, result }, resp.answer)
     } catch {
-      // If the API is unreachable, don't apply the guess — show error via toast
+      notifyApiError('Couldn\u2019t submit guess \u2014 check your connection and try again')
     }
   }, [date, gameState.guesses, applyGuess])
 
