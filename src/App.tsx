@@ -147,7 +147,7 @@ function App() {
       {/* Audio Player */}
       <div className="mb-6 w-full flex justify-center">
         <AudioPlayer
-          audioFile={puzzle.song.audioFile}
+          date={puzzle.date}
           clipIndex={isPlaying ? currentClipIndex : CLIP_DURATIONS.length - 1}
         />
       </div>

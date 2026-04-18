@@ -4,16 +4,16 @@ import { CLIP_DURATIONS } from '../types'
 import { getAudioUrl } from '../lib/storage'
 
 interface AudioPlayerProps {
-  audioFile: string
+  date: string
   clipIndex: number
 }
 
-export function AudioPlayer({ audioFile, clipIndex }: AudioPlayerProps) {
+export function AudioPlayer({ date, clipIndex }: AudioPlayerProps) {
   const [audioSrc, setAudioSrc] = useState<string | null>(null)
   useEffect(() => {
     setAudioSrc(null)
-    getAudioUrl(audioFile).then(setAudioSrc)
-  }, [audioFile])
+    getAudioUrl(date).then(setAudioSrc)
+  }, [date])
 
   const maxDuration = CLIP_DURATIONS[CLIP_DURATIONS.length - 1]
   const clipDuration = CLIP_DURATIONS[clipIndex]

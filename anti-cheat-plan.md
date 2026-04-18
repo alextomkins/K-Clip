@@ -15,7 +15,7 @@
 
 **What changes:** Rename audio files in Firebase Storage from `aespa-black-mamba.mp3` to `{YYYY-MM-DD}.mp3` (e.g., `2026-04-17.mp3`). The client requests audio by date instead of by song identity — it never needs to know the filename-to-song mapping.
 
-Since songs cycle every ~160 days, this means uploading duplicate copies of the same MP3 under different date names. A script can pre-generate these for the next year in one batch.
+A script can pre-generate date-named files for the next year in one batch. The song list will be expanded before the ~160-day cycle completes, so duplicate date-to-song mappings are not a concern.
 
 **Changes required:**
 
@@ -32,7 +32,6 @@ Since songs cycle every ~160 days, this means uploading duplicate copies of the 
 
 **Cons:**
 
-- Duplicate files in storage (160 × ~200KB = ~32MB per cycle — negligible cost)
 - Need to upload new date-named files when adding songs or extending the calendar
 - Song list + shuffle logic still in the bundle (accepted risk — requires code inspection)
 
