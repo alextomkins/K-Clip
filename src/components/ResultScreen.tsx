@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react'
 import confetti from 'canvas-confetti'
-import { GameState, DailyPuzzle, PuzzleSummary } from '../types'
+import { GameState, DailyPuzzle, Song, PuzzleSummary } from '../types'
 import { generateShareText, copyToClipboard } from '../utils/share'
 import { logShare } from '../lib/analytics'
 
 interface ResultScreenProps {
   gameState: GameState
   puzzle: DailyPuzzle
+  answerSong: Song | null
   justWon: boolean
   puzzleSummary: PuzzleSummary | null
 }
 
-export function ResultScreen({ gameState, puzzle, justWon, puzzleSummary }: ResultScreenProps) {
+export function ResultScreen({ gameState, puzzle, answerSong, justWon, puzzleSummary }: ResultScreenProps) {
   const [copied, setCopied] = useState(false)
 
   const isWin = gameState.status === 'won'
@@ -44,8 +45,14 @@ export function ResultScreen({ gameState, puzzle, justWon, puzzleSummary }: Resu
         {isWin ? 'You got it!' : 'Better luck tomorrow'}
       </p>
       <p className="text-gray-300 mb-1">
-        <span className="font-semibold">{puzzle.song.title}</span>
-        <span className="text-gray-400"> — {puzzle.song.artist}</span>
+        {answerSong ? (
+          <>
+            <span className="font-semibold">{answerSong.title}</span>
+            <span className="text-gray-400"> — {answerSong.artist}</span>
+          </>
+        ) : (
+          <span className="text-gray-500">Loading answer…</span>
+        )}
       </p>
       <p className="text-gray-400 text-sm mb-4">
         {isWin

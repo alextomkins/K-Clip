@@ -43,6 +43,7 @@ function App() {
     submitGuess,
     skipGuess,
     justWon,
+    answerSong,
     stats,
     puzzleSummary,
   } = useGameState(selectedDate)
@@ -167,7 +168,7 @@ function App() {
         </div>
       ) : (
         <div className="mb-4 w-full flex justify-center">
-          <ResultScreen gameState={gameState} puzzle={puzzle} justWon={justWon} puzzleSummary={puzzleSummary} />
+          <ResultScreen gameState={gameState} puzzle={puzzle} answerSong={answerSong} justWon={justWon} puzzleSummary={puzzleSummary} />
         </div>
       )}
 

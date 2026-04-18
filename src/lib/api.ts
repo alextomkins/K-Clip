@@ -96,6 +96,15 @@ export const api = {
     return handleResponse<T>(res)
   },
 
+  async postPublic<T>(path: string, body?: unknown): Promise<T> {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
+    return handleResponse<T>(res)
+  },
+
   async post<T>(path: string, body?: unknown): Promise<T> {
     const headers = await getAuthHeaders()
     try {

@@ -26,8 +26,12 @@ export interface GameState {
 
 export interface DailyPuzzle {
   date: string
-  song: Song
   dayNumber: number
+}
+
+export interface GuessResponse {
+  result: 'correct' | 'partial' | 'incorrect'
+  answer?: Song
 }
 
 export const CLIP_DURATIONS = [1, 2, 5, 10, 20, 30] as const

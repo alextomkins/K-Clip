@@ -28,6 +28,14 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate puzzle schedule
+        run: node scripts/generate-puzzle-schedule.mjs > api/KClip.Api/Data/puzzle-schedule.json
+
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy kclip-api \

@@ -1,11 +1,10 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
-import { GameState, Guess, GuessResult, DailyPuzzle, PuzzleSummary, MAX_GUESSES, CLIP_DURATIONS } from '../types'
+import { GameState, Guess, GuessResult, DailyPuzzle, Song, GuessResponse, PuzzleSummary, MAX_GUESSES, CLIP_DURATIONS } from '../types'
 import { getTodayAEST, getDailyPuzzle } from '../utils/puzzle'
-import { loadGameState, saveGameState } from '../utils/storage'
+import { loadGameState, saveGameState, loadAnswerSong, saveAnswerSong } from '../utils/storage'
 import { useStats } from './useStats'
 import { useDateReload } from './useDateReload'
 import { useAuthContext } from '../contexts/AuthContext'
-import { songLookup } from '../data/songs'
 import { logGameStart, logGuess, logGameEnd } from '../lib/analytics'
 import { api } from '../lib/api'
 
@@ -23,6 +22,7 @@ export function useGameState(date: string) {
     return loadGameState(date) ?? createInitialState(date)
   })
 
+  const [answerSong, setAnswerSong] = useState<Song | null>(() => loadAnswerSong(date))
   const [justWon, setJustWon] = useState(false)
   const [puzzleSummary, setPuzzleSummary] = useState<PuzzleSummary | null>(null)
   const [loading, setLoading] = useState(false)
@@ -35,6 +35,7 @@ export function useGameState(date: string) {
     // Always immediately show cached/local state to avoid stale data flash
     const local = loadGameState(date) ?? createInitialState(date)
     setGameState(local)
+    setAnswerSong(loadAnswerSong(date))
     setJustWon(false)
     setPuzzleSummary(null)
 
@@ -74,6 +75,21 @@ export function useGameState(date: string) {
     return () => { cancelled = true }
   }, [date, gameState.status])
 
+  // Fetch answer from API when game is completed but answer is missing (e.g. pre-migration games)
+  useEffect(() => {
+    if (gameState.status === 'playing' || answerSong) return
+    let cancelled = false
+    api.getPublic<{ songId: string; title: string; artist: string }>(`/api/puzzles/${date}/answer`)
+      .then((data) => {
+        if (cancelled) return
+        const song: Song = { id: data.songId, title: data.title, artist: data.artist }
+        setAnswerSong(song)
+        saveAnswerSong(date, song)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [date, gameState.status, answerSong])
+
   // Log game_start when a fresh puzzle is opened
   const loggedStart = useRef<string | null>(null)
   useEffect(() => {
@@ -89,7 +105,7 @@ export function useGameState(date: string) {
       : Math.min(gameState.guesses.length, CLIP_DURATIONS.length - 1)
   const attemptsRemaining = MAX_GUESSES - gameState.guesses.length
 
-  const applyGuess = useCallback((guess: Guess) => {
+  const applyGuess = useCallback((guess: Guess, answer?: Song) => {
     setGameState((prev) => {
       if (prev.status !== 'playing') return prev
       const newGuesses = [...prev.guesses, guess]
@@ -119,6 +135,13 @@ export function useGameState(date: string) {
 
       return newState
     })
+
+    // Store answer when revealed by the server
+    if (answer) {
+      setAnswerSong(answer)
+      saveAnswerSong(date, answer)
+    }
+
     if (guess.result === 'correct') setJustWon(true)
 
     // Log analytics events imperatively
@@ -128,21 +151,21 @@ export function useGameState(date: string) {
     } else if (gameState.guesses.length + 1 >= MAX_GUESSES) {
       logGameEnd(puzzle.dayNumber, 'lost', gameState.guesses.length + 1)
     }
-  }, [user, puzzle.dayNumber, gameState.guesses.length])
+  }, [user, date, puzzle.dayNumber, gameState.guesses.length])
 
-  const submitGuess = useCallback((songId: string) => {
-    const isCorrect = songId === puzzle.song.id
-    let result: GuessResult = 'incorrect'
-    if (isCorrect) {
-      result = 'correct'
-    } else {
-      const guessedSong = songLookup.get(songId)
-      if (guessedSong && guessedSong.artist === puzzle.song.artist) {
-        result = 'partial'
-      }
+  const submitGuess = useCallback(async (songId: string) => {
+    const previousGuessIds = gameState.guesses.map((g) => g.songId)
+    try {
+      const resp = await api.postPublic<GuessResponse>(`/api/puzzles/${date}/guess`, {
+        songId,
+        previousGuessIds,
+      })
+      const result: GuessResult = resp.result
+      applyGuess({ songId, result }, resp.answer)
+    } catch {
+      // If the API is unreachable, don't apply the guess — show error via toast
     }
-    applyGuess({ songId, result })
-  }, [puzzle.song.id, puzzle.song.artist, applyGuess])
+  }, [date, gameState.guesses, applyGuess])
 
   const skipGuess = useCallback(() => {
     applyGuess({ songId: '', result: 'skipped' })
@@ -157,6 +180,7 @@ export function useGameState(date: string) {
     submitGuess,
     skipGuess,
     justWon,
+    answerSong,
     stats,
     puzzleSummary,
   }
