@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using KClip.Api.Auth;
 using KClip.Api.Models;
 using KClip.Api.Services;
@@ -22,7 +23,7 @@ public class ProfileController(IGameRepository repo) : ControllerBase
         {
             profile = new UserProfile
             {
-                DisplayName = User.GetDisplayName() ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "Anonymous",
+                DisplayName = User.GetDisplayName() ?? User.FindFirst(ClaimTypes.Email)?.Value ?? "Anonymous",
                 PhotoURL = User.GetPhotoURL(),
                 CreatedAt = DateTime.UtcNow.ToString("o"),
             };
@@ -56,21 +57,6 @@ public class ProfileController(IGameRepository repo) : ControllerBase
             profile.DisplayName = trimmed;
         }
 
-        if (request.PhotoURL is not null)
-        {
-            if (request.PhotoURL == "")
-            {
-                profile.PhotoURL = null;
-            }
-            else
-            {
-                if (!Uri.TryCreate(request.PhotoURL, UriKind.Absolute, out var uri)
-                    || (uri.Scheme != "https"))
-                    return BadRequest("Photo URL must be a valid HTTPS URL.");
-                profile.PhotoURL = request.PhotoURL;
-            }
-        }
-
         await _repo.SaveProfile(uid, profile);
         return NoContent();
     }
@@ -95,26 +81,4 @@ public class ProfileController(IGameRepository repo) : ControllerBase
         await _repo.SaveProfile(uid, profile);
         return NoContent();
     }
-}
-
-public class UpdateProfileRequest
-{
-    public string? DisplayName { get; set; }
-    public string? PhotoURL { get; set; }
-}
-
-public class ProfileResponse
-{
-    public string DisplayName { get; set; } = "";
-    public string? PhotoURL { get; set; }
-}
-
-public class VisibilityRequest
-{
-    public bool Visible { get; set; }
-}
-
-public class VisibilityResponse
-{
-    public bool Visible { get; set; }
 }

@@ -14,8 +14,8 @@ interface HeaderProps {
 
 export function Header({ onShowHowToPlay, onShowStats, onShowLeaderboard, showToast }: HeaderProps) {
   const { user, profile, loading: authLoading, signOut } = useAuthContext()
-  const displayName = profile?.displayName ?? user?.displayName ?? user?.email
-  const photoURL = profile?.photoURL ?? user?.photoURL
+  const displayName = profile?.displayName
+  const photoURL = profile?.photoURL
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [signInOpen, setSignInOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
@@ -57,8 +57,16 @@ export function Header({ onShowHowToPlay, onShowStats, onShowLeaderboard, showTo
       >
         🏆
       </button>
-      {!authLoading && (
-        user ? (
+      {!authLoading && !user && (
+        <button
+          onClick={() => setSignInOpen(true)}
+          className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold px-3 py-1.5 rounded-full transition-colors"
+          aria-label="Sign in"
+        >
+          Sign in
+        </button>
+      )}
+      {user && profile && (
           <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setUserMenuOpen((v) => !v)}
@@ -113,15 +121,6 @@ export function Header({ onShowHowToPlay, onShowStats, onShowLeaderboard, showTo
               </div>
             )}
           </div>
-        ) : (
-          <button
-            onClick={() => setSignInOpen(true)}
-            className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold px-3 py-1.5 rounded-full transition-colors"
-            aria-label="Sign in"
-          >
-            👤 Sign in
-          </button>
-        )
       )}
       <SignInModal isOpen={signInOpen} onClose={() => setSignInOpen(false)} />
       <ProfileModal isOpen={profileOpen} onClose={() => setProfileOpen(false)} showToast={showToast} />

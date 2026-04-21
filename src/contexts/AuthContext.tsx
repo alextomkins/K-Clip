@@ -1,13 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, type ReactNode } from 'react'
 import { type User } from 'firebase/auth'
 import { useAuth } from '../hooks/useAuth'
+import { useProfile } from '../hooks/useProfile'
 import { migrateLocalData } from '../lib/migration'
 import { api } from '../lib/api'
-
-interface ProfileData {
-  displayName: string
-  photoURL: string | null
-}
+import { type ProfileData } from '../types'
 
 interface AuthContextValue {
   user: User | null
@@ -16,7 +13,7 @@ interface AuthContextValue {
   refreshProfile: () => Promise<void>
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
-  signUpWithEmail: (email: string, password: string) => Promise<void>
+  signUpWithEmail: (email: string, password: string, displayName: string) => Promise<void>
   resetPassword: (email: string) => Promise<void>
   signOut: () => Promise<void>
   getIdToken: () => Promise<string | null>
@@ -26,35 +23,53 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const auth = useAuth()
-  const [profile, setProfile] = useState<ProfileData | null>(null)
+  const { profile, refreshProfile, clearProfile } = useProfile(auth.user)
+  const migratedRef = useRef<string | null>(null)
+  const skipAutoFetchRef = useRef(false)
 
-  const refreshProfile = useCallback(async () => {
-    if (!auth.user) return
+  // Wraps signUpWithEmail to suppress the auto-fetch race and push the
+  // chosen display name to the backend before the first profile load.
+  const signUpWithEmail = useCallback(async (email: string, password: string, displayName: string) => {
+    skipAutoFetchRef.current = true
     try {
-      const data = await api.get<ProfileData>('/api/profile')
-      setProfile(data)
-    } catch {
-      // Fall back to Firebase auth claims
-      setProfile({
-        displayName: auth.user.displayName ?? auth.user.email ?? 'Anonymous',
-        photoURL: auth.user.photoURL,
-      })
+      await auth.signUpWithEmail(email, password, displayName)
+      await api.put('/api/profile', { displayName })
+      await refreshProfile()
+    } finally {
+      skipAutoFetchRef.current = false
     }
-  }, [auth.user])
+  }, [auth, refreshProfile])
 
   // Trigger one-time migration when user signs in, then load profile
   useEffect(() => {
     if (!auth.user) {
-      setProfile(null)
+      clearProfile()
+      migratedRef.current = null
       return
     }
-    migrateLocalData(auth.user.uid)
-      .catch((err) => console.error('Migration failed:', err))
-      .finally(() => refreshProfile())
-  }, [auth.user, refreshProfile])
+
+    // Sign-up flow handles profile fetch itself to avoid the race
+    if (skipAutoFetchRef.current) return
+
+    let cancelled = false
+    const uid = auth.user.uid
+
+    // Only migrate once per user session
+    const migrate = migratedRef.current === uid
+      ? Promise.resolve()
+      : migrateLocalData(uid).catch((err) => console.error('Migration failed:', err))
+
+    migrate.then(() => {
+      migratedRef.current = uid
+      if (!cancelled) refreshProfile()
+    })
+
+    return () => { cancelled = true }
+  }, [auth.user, refreshProfile, clearProfile])
 
   const value: AuthContextValue = {
     ...auth,
+    signUpWithEmail,
     profile,
     refreshProfile,
   }

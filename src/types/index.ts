@@ -76,3 +76,8 @@ export interface LeaderboardResponse {
   currentUser: LeaderboardEntry | null
   currentUserHidden: boolean
 }
+
+export interface ProfileData {
+  displayName: string
+  photoURL: string | null
+}

@@ -19,7 +19,10 @@ const AVATAR_COLORS = [
 ]
 
 export function avatarColor(name: string | null | undefined): string {
-  const char = (name && name.length > 0) ? name[0].toUpperCase() : '?'
-  const code = char.charCodeAt(0)
-  return AVATAR_COLORS[code % AVATAR_COLORS.length]
+  if (!name || name.length === 0) return AVATAR_COLORS[0]
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) | 0
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }

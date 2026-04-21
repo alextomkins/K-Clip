@@ -5,6 +5,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
+  updateProfile,
   signOut as firebaseSignOut,
   GoogleAuthProvider,
   type User,
@@ -33,8 +34,11 @@ export function useAuth() {
     await signInWithEmailAndPassword(auth, email, password)
   }, [])
 
-  const signUpWithEmail = useCallback(async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password)
+  const signUpWithEmail = useCallback(async (email: string, password: string, displayName: string) => {
+    const { user } = await createUserWithEmailAndPassword(auth, email, password)
+    await updateProfile(user, { displayName })
+    // Force token refresh so the new displayName claim is included in the ID token
+    await user.getIdToken(true)
   }, [])
 
   const resetPassword = useCallback(async (email: string) => {

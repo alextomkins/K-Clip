@@ -15,8 +15,8 @@ function firebaseErrorMessage(error: unknown): string {
     switch (error.code) {
       case 'auth/invalid-email': return 'Invalid email address.'
       case 'auth/user-disabled': return 'This account has been disabled.'
-      case 'auth/user-not-found': return 'No account found with this email.'
-      case 'auth/wrong-password': return 'Incorrect password.'
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
       case 'auth/invalid-credential': return 'Incorrect email or password.'
       case 'auth/email-already-in-use': return 'An account with this email already exists.'
       case 'auth/weak-password': return 'Password must be at least 6 characters.'
@@ -31,6 +31,7 @@ function firebaseErrorMessage(error: unknown): string {
 export function SignInModal({ isOpen, onClose }: SignInModalProps) {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword } = useAuthContext()
   const [mode, setMode] = useState<Mode>('sign-in')
+  const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -38,6 +39,7 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
   const [submitting, setSubmitting] = useState(false)
 
   function reset() {
+    setDisplayName('')
     setEmail('')
     setPassword('')
     setError('')
@@ -75,7 +77,7 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
         return
       }
       if (mode === 'sign-up') {
-        await signUpWithEmail(email, password)
+        await signUpWithEmail(email, password, displayName.trim())
       } else {
         await signInWithEmail(email, password)
       }
@@ -116,6 +118,18 @@ export function SignInModal({ isOpen, onClose }: SignInModalProps) {
       )}
 
       <form onSubmit={handleEmailSubmit} className="space-y-3">
+        {mode === 'sign-up' && (
+          <input
+            type="text"
+            placeholder="Display name"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            required
+            maxLength={30}
+            autoComplete="nickname"
+            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
+          />
+        )}
         <input
           type="email"
           placeholder="Email"
