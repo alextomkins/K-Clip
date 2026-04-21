@@ -40,7 +40,8 @@ https://alextomkins.github.io/K-Clip/ 🎵
 - 📊 **Stats tracking** — win %, streaks, guess distribution
 - 🏆 **Leaderboard** — compete with friends for the best win rate
 - 📋 **Shareable results** — copy your score to clipboard
-- 🔐 **Google Sign-In** — sync progress across devices (optional)
+- 🔐 **Google & Email Sign-In** — sync progress across devices (optional)
+- 👤 **Editable profile** — customise your display name
 - 📈 **Community stats** — see the daily average guesses and player count
 - 🎉 **Confetti** on a correct guess
 - 📱 **Mobile-first** responsive PWA
@@ -52,7 +53,7 @@ https://alextomkins.github.io/K-Clip/ 🎵
 - **React 19** + **TypeScript 5**
 - **Vite** for builds
 - **Tailwind CSS 3** for styling
-- **Firebase Auth** (Google Sign-In)
+- **Firebase Auth** (Google Sign-In + Email/Password)
 - **Firebase Storage** for audio hosting
 - **Firebase Analytics** for event tracking
 - **vite-plugin-pwa** for offline support
