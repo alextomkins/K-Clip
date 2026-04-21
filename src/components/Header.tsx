@@ -1,17 +1,24 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuthContext } from '../contexts/AuthContext'
 import { api } from '../lib/api'
+import { avatarColor } from '../utils/avatar'
+import { SignInModal } from './SignInModal'
+import { ProfileModal } from './ProfileModal'
 
 interface HeaderProps {
   onShowHowToPlay: () => void
   onShowStats: () => void
   onShowLeaderboard: () => void
-  showToast: (msg: string) => void
+  showToast: (msg: string, variant?: 'error' | 'success') => void
 }
 
 export function Header({ onShowHowToPlay, onShowStats, onShowLeaderboard, showToast }: HeaderProps) {
-  const { user, loading: authLoading, signIn, signOut } = useAuthContext()
+  const { user, profile, loading: authLoading, signOut } = useAuthContext()
+  const displayName = profile?.displayName ?? user?.displayName ?? user?.email
+  const photoURL = profile?.photoURL ?? user?.photoURL
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [signInOpen, setSignInOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -58,23 +65,29 @@ export function Header({ onShowHowToPlay, onShowStats, onShowLeaderboard, showTo
               className="flex items-center leading-none"
               aria-label="User menu"
             >
-              {user.photoURL ? (
+              {photoURL ? (
                 <img
-                  src={user.photoURL}
+                  src={photoURL}
                   alt=""
-                  className="w-7 h-7 rounded-full"
+                  className="w-7 h-7 rounded-full object-cover"
                   referrerPolicy="no-referrer"
                 />
               ) : (
-                <span className="w-7 h-7 rounded-full bg-green-600 flex items-center justify-center text-xs font-bold">
-                  {user.displayName?.[0] ?? '?'}
+                <span className={`w-7 h-7 rounded-full ${avatarColor(displayName)} flex items-center justify-center text-xs font-bold`}>
+                  {displayName?.[0] ?? '?'}
                 </span>
               )}
             </button>
             {userMenuOpen && (
               <div className="absolute right-0 mt-2 w-40 bg-gray-800 border border-gray-700 rounded-lg shadow-lg z-50 py-1">
-                <p className="px-3 py-1.5 text-xs text-gray-400 truncate">{user.displayName ?? user.email}</p>
+                <p className="px-3 py-1.5 text-xs text-gray-400 truncate">{displayName}</p>
                 <hr className="border-gray-700" />
+                <button
+                  onClick={() => { setUserMenuOpen(false); setProfileOpen(true) }}
+                  className="w-full text-left px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                >
+                  Edit profile
+                </button>
                 <button
                   onClick={() => { setUserMenuOpen(false); signOut() }}
                   className="w-full text-left px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
@@ -88,7 +101,7 @@ export function Header({ onShowHowToPlay, onShowStats, onShowLeaderboard, showTo
                     try {
                       await api.delete('/api/account')
                       await signOut()
-                      showToast('Account deleted')
+                      showToast('Account deleted', 'success')
                     } catch {
                       showToast('Failed to delete account')
                     }
@@ -102,7 +115,7 @@ export function Header({ onShowHowToPlay, onShowStats, onShowLeaderboard, showTo
           </div>
         ) : (
           <button
-            onClick={signIn}
+            onClick={() => setSignInOpen(true)}
             className="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold px-3 py-1.5 rounded-full transition-colors"
             aria-label="Sign in"
           >
@@ -110,6 +123,8 @@ export function Header({ onShowHowToPlay, onShowStats, onShowLeaderboard, showTo
           </button>
         )
       )}
+      <SignInModal isOpen={signInOpen} onClose={() => setSignInOpen(false)} />
+      <ProfileModal isOpen={profileOpen} onClose={() => setProfileOpen(false)} showToast={showToast} />
     </div>
   )
 }

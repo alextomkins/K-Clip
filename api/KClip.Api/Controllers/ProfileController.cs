@@ -1,4 +1,5 @@
 using KClip.Api.Auth;
+using KClip.Api.Models;
 using KClip.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,68 @@ namespace KClip.Api.Controllers;
 public class ProfileController(IGameRepository repo) : ControllerBase
 {
     private readonly IGameRepository _repo = repo;
+
+    [HttpGet]
+    public async Task<ActionResult<ProfileResponse>> GetProfile()
+    {
+        var uid = User.GetUid();
+        var profile = await _repo.GetProfile(uid);
+        if (profile is null)
+        {
+            profile = new UserProfile
+            {
+                DisplayName = User.GetDisplayName() ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "Anonymous",
+                PhotoURL = User.GetPhotoURL(),
+                CreatedAt = DateTime.UtcNow.ToString("o"),
+            };
+            await _repo.SaveProfile(uid, profile);
+        }
+        return Ok(new ProfileResponse
+        {
+            DisplayName = profile.DisplayName,
+            PhotoURL = profile.PhotoURL,
+        });
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+    {
+        var uid = User.GetUid();
+        var profile = await _repo.GetProfile(uid);
+        if (profile is null)
+        {
+            profile = new UserProfile
+            {
+                CreatedAt = DateTime.UtcNow.ToString("o"),
+            };
+        }
+
+        if (request.DisplayName is not null)
+        {
+            var trimmed = request.DisplayName.Trim();
+            if (trimmed.Length == 0 || trimmed.Length > 30)
+                return BadRequest("Display name must be 1-30 characters.");
+            profile.DisplayName = trimmed;
+        }
+
+        if (request.PhotoURL is not null)
+        {
+            if (request.PhotoURL == "")
+            {
+                profile.PhotoURL = null;
+            }
+            else
+            {
+                if (!Uri.TryCreate(request.PhotoURL, UriKind.Absolute, out var uri)
+                    || (uri.Scheme != "https"))
+                    return BadRequest("Photo URL must be a valid HTTPS URL.");
+                profile.PhotoURL = request.PhotoURL;
+            }
+        }
+
+        await _repo.SaveProfile(uid, profile);
+        return NoContent();
+    }
 
     [HttpGet("visibility")]
     public async Task<ActionResult<VisibilityResponse>> GetVisibility()
@@ -32,6 +95,18 @@ public class ProfileController(IGameRepository repo) : ControllerBase
         await _repo.SaveProfile(uid, profile);
         return NoContent();
     }
+}
+
+public class UpdateProfileRequest
+{
+    public string? DisplayName { get; set; }
+    public string? PhotoURL { get; set; }
+}
+
+public class ProfileResponse
+{
+    public string DisplayName { get; set; } = "";
+    public string? PhotoURL { get; set; }
 }
 
 public class VisibilityRequest
