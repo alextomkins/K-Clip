@@ -4,7 +4,7 @@ import { useAuthContext } from '../contexts/AuthContext'
 import { api } from '../lib/api'
 
 export function useLeaderboard() {
-  const { user } = useAuthContext()
+  const { user, profile } = useAuthContext()
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [currentUser, setCurrentUser] = useState<LeaderboardEntry | null>(null)
   const [isHidden, setIsHidden] = useState(false)
@@ -29,7 +29,7 @@ export function useLeaderboard() {
         setCurrentUser(null)
       })
       .finally(() => setLoading(false))
-  }, [user])
+  }, [user, profile])
 
   useEffect(() => {
     refresh()

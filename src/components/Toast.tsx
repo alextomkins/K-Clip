@@ -1,8 +1,11 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 
+type ToastVariant = 'error' | 'success'
+
 interface Toast {
   id: number
   message: string
+  variant: ToastVariant
 }
 
 let nextId = 0
@@ -11,9 +14,9 @@ export function useToast() {
   const [toasts, setToasts] = useState<Toast[]>([])
   const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map())
 
-  const show = useCallback((message: string, durationMs = 4000) => {
+  const show = useCallback((message: string, variant: ToastVariant = 'error', durationMs = 4000) => {
     const id = ++nextId
-    setToasts((prev) => [...prev, { id, message }])
+    setToasts((prev) => [...prev, { id, message, variant }])
     const timer = setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id))
       timers.current.delete(id)
@@ -31,6 +34,11 @@ export function useToast() {
   return { toasts, show }
 }
 
+const variantClasses: Record<ToastVariant, string> = {
+  error: 'bg-red-900/90',
+  success: 'bg-green-900/90',
+}
+
 export function ToastContainer({ toasts }: { toasts: Toast[] }) {
   if (toasts.length === 0) return null
 
@@ -39,7 +47,7 @@ export function ToastContainer({ toasts }: { toasts: Toast[] }) {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="bg-red-900/90 text-white text-sm px-4 py-2 rounded-lg shadow-lg animate-fade-in"
+          className={`${variantClasses[t.variant]} text-white text-sm px-4 py-2 rounded-lg shadow-lg animate-fade-in`}
         >
           {t.message}
         </div>

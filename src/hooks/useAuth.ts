@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile,
   signOut as firebaseSignOut,
   GoogleAuthProvider,
   type User,
@@ -22,12 +26,23 @@ export function useAuth() {
     return unsubscribe
   }, [])
 
-  const signIn = useCallback(async () => {
-    try {
-      await signInWithPopup(auth, googleProvider)
-    } catch (error) {
-      console.error('Sign-in failed:', error)
-    }
+  const signInWithGoogle = useCallback(async () => {
+    await signInWithPopup(auth, googleProvider)
+  }, [])
+
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
+    await signInWithEmailAndPassword(auth, email, password)
+  }, [])
+
+  const signUpWithEmail = useCallback(async (email: string, password: string, displayName: string) => {
+    const { user } = await createUserWithEmailAndPassword(auth, email, password)
+    await updateProfile(user, { displayName })
+    // Force token refresh so the new displayName claim is included in the ID token
+    await user.getIdToken(true)
+  }, [])
+
+  const resetPassword = useCallback(async (email: string) => {
+    await sendPasswordResetEmail(auth, email)
   }, [])
 
   const signOut = useCallback(async () => {
@@ -39,5 +54,5 @@ export function useAuth() {
     return user.getIdToken()
   }, [user])
 
-  return { user, loading, signIn, signOut, getIdToken }
+  return { user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword, signOut, getIdToken }
 }

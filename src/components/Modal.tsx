@@ -22,13 +22,13 @@ export function Modal({ isOpen, onClose, maxWidth = 'max-w-sm', children }: Moda
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
-      onClick={onClose}
+      onMouseDown={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         className={`bg-gray-800 rounded-xl w-full ${maxWidth} p-6 relative max-h-[80vh] flex flex-col`}
-        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
