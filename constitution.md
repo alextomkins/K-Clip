@@ -148,8 +148,10 @@ Both frontend and backend deploy automatically via GitHub Actions on push to `ma
 * **How to Play modal** — an ℹ️ button in the header opens a `HowToPlay` overlay explaining the rules and colour legend. Close via ✕ button or backdrop click.
 * **Stats modal** — a 📊 button in the header opens a `StatsModal` overlay showing Played, Win %, Current Streak, Max Streak, guess distribution bar chart, and community stats for today. Close via ✕ button or backdrop click.
 * **Leaderboard modal** — a 🏆 button in the header opens a `LeaderboardModal` showing ranked players (visible to all users, including anonymous). Authenticated users see their own position and a visibility toggle. Close via ✕ button or backdrop click.
-* **User menu** — when signed in, the user's avatar appears in the header. Clicking it opens a dropdown with Sign Out and Delete Account options.
-* **Toast notifications** — a `ToastContainer` at the bottom of the screen shows error messages (e.g. offline, API errors) via the `useToast` hook. API errors are routed through `setApiErrorHandler`.
+* **User menu** — when signed in, the user's avatar appears in the header. Clicking it opens the **Profile modal**.
+* **Profile modal** — shows the user's avatar, email (read-only), and an editable display name. Below the form: Reset Password (email/password users only), Sign Out, and Delete Account actions.
+* **Toast notifications** — a `ToastContainer` at the bottom of the screen shows messages via the `useToast` hook. Toasts support `error` (red, default) and `success` (green) variants. API errors are routed through `setApiErrorHandler`.
+* **Avatar colours** — when a user has no photo (e.g. email/password sign-up), a coloured circle with their initial is shown. The colour is deterministic, derived from a hash of the full display name via `avatarColor()` in `src/utils/avatar.ts`.
 * **Footer** — displayed below the guess history:
   * `Next song in hh:mm:ss` — live countdown to 00:00 AEST, driven by the `useCountdown` hook.
   * `v{version}` — sourced from `package.json` via Vite's `define` (`__APP_VERSION__`), declared in `vite-env.d.ts`.
@@ -158,11 +160,17 @@ Both frontend and backend deploy automatically via GitHub Actions on push to `ma
 
 ## 5. Authentication & User Accounts
 
-* **Firebase Authentication** with Google Sign-In (popup flow).
+* **Firebase Authentication** with two sign-in methods:
+  * **Google Sign-In** (popup flow)
+  * **Email/Password** — sign up (with required display name), sign in, and password reset
 * Auth is **optional** — the game is fully playable without signing in (localStorage only).
-* `useAuth` hook wraps `onAuthStateChanged`, provides `{ user, loading, signIn, signOut, getIdToken }`.
-* `AuthContext` provides auth state app-wide; triggers one-time localStorage migration on first sign-in.
-* Header shows a 👤 sign-in button when not authenticated, or the user's avatar when signed in.
+* `useAuth` hook wraps Firebase auth methods, provides `{ user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, resetPassword, signOut, getIdToken }`.
+  * `signUpWithEmail` sets the display name on the Firebase user via `updateProfile`, force-refreshes the ID token, then pushes the display name to the backend via `PUT /api/profile` to avoid race conditions with the auto-created profile.
+* `useProfile` hook manages profile state (display name, photo URL) fetched from `GET /api/profile`, with fallback to Firebase auth claims.
+* `AuthContext` provides auth state and profile data app-wide; composes `useAuth` + `useProfile`. Triggers one-time localStorage migration on first sign-in, then loads the profile.
+  * A `skipAutoFetchRef` prevents the automatic profile fetch from racing with the sign-up flow.
+* `SignInModal` — a modal with Google sign-in button, email/password form (with mode switching between sign-in, sign-up, and password reset), and user-friendly Firebase error messages. Sign-up mode includes a required display name field (max 30 chars). Error messages avoid user enumeration (all credential errors show the same generic message).
+* Header shows a sign-in button when not authenticated. When signed in, shows the user's avatar (from profile, not Firebase auth) — clicking opens the Profile modal. Neither the avatar nor the sign-in button renders while the profile is loading, preventing UI flashes.
 * **Account deletion** — `DELETE /api/account` deletes all Firestore data and the Firebase Auth record.
 
 ---
@@ -295,7 +303,7 @@ api/
 │   │   ├── StatsController.cs        # GET/PUT user stats
 │   │   ├── PuzzlesController.cs      # GET daily summary
 │   │   ├── LeaderboardController.cs  # GET leaderboard (anonymous OK)
-│   │   ├── ProfileController.cs      # GET/PUT leaderboard visibility
+│   │   ├── ProfileController.cs      # GET/PUT profile, GET/PUT visibility
 │   │   ├── MigrationController.cs    # POST bulk migration from localStorage
 │   │   └── SeedController.cs         # POST dev-only test data seeding
 │   ├── Models/
@@ -303,6 +311,8 @@ api/
 │   │   ├── PuzzleSummary.cs, PuzzleResult.cs
 │   │   ├── LeaderboardEntry.cs, LeaderboardResponse.cs
 │   │   ├── UserProfile.cs, MigrationRequest.cs
+│   │   ├── ProfileResponse.cs, UpdateProfileRequest.cs
+│   │   ├── VisibilityRequest.cs, VisibilityResponse.cs
 │   │   └── CompleteGameRequest.cs
 │   ├── Services/
 │   │   ├── IGameRepository.cs        # Repository interface
@@ -324,6 +334,8 @@ api/
 | `PUT` | `/api/stats` | Required | Save/update user's stats |
 | `GET` | `/api/puzzles/{date}/summary` | Required | Get daily puzzle summary |
 | `GET` | `/api/leaderboard` | Optional | Get all-time leaderboard (anonymous OK) |
+| `GET` | `/api/profile` | Required | Get user's profile (auto-creates if missing) |
+| `PUT` | `/api/profile` | Required | Update display name |
 | `GET` | `/api/profile/visibility` | Required | Get leaderboard visibility setting |
 | `PUT` | `/api/profile/visibility` | Required | Set leaderboard visibility |
 | `POST` | `/api/migrate` | Required | Bulk import localStorage data |
@@ -471,6 +483,7 @@ The MVP is complete when:
   * Win or lose after up to 6 attempts
   * See a result screen
   * Copy a shareable result
-  * Sign in with Google to sync across devices
+  * Sign in with Google or email/password to sync across devices
   * View their stats and the community leaderboard
+  * Edit their display name via the profile modal
   * Browse and play past puzzles from the archive

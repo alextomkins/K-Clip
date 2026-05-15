@@ -1,3 +1,4 @@
+import { avatarColor } from '../utils/avatar'
 import { LeaderboardEntry } from '../types'
 import { useAuthContext } from '../contexts/AuthContext'
 import { useLeaderboard } from '../hooks/useLeaderboard'
@@ -139,11 +140,11 @@ function LeaderboardRow({
             <img
               src={entry.photoURL}
               alt=""
-              className="w-6 h-6 rounded-full shrink-0"
+              className="w-6 h-6 rounded-full shrink-0 object-cover"
               referrerPolicy="no-referrer"
             />
           ) : (
-            <span className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center text-xs font-bold shrink-0">
+            <span className={`w-6 h-6 rounded-full ${avatarColor(entry.displayName)} flex items-center justify-center text-xs font-bold shrink-0`}>
               {entry.displayName[0] ?? '?'}
             </span>
           )}
