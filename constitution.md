@@ -64,9 +64,9 @@ After the game ends:
 ### Share Output Format
 
 ```text
-🎵 K-Clip #12
-🟩🟥🟥⬜⬜⬜
-Guessed in 1/6
+🎵 K-Clip #52
+🟥🟧🟧🟩⬜⬜
+Guessed in 4/6
 
 https://alextomkins.github.io/K-Clip/ 🎵
 ```
@@ -104,11 +104,13 @@ https://alextomkins.github.io/K-Clip/ 🎵
 Both frontend and backend deploy automatically via GitHub Actions on push to `master`.
 
 **Frontend** (`.github/workflows/deploy.yml`):
+
 * Triggers on any push to `master`
 * Builds with Vite, injecting Firebase + API secrets as env vars
 * Deploys static output to GitHub Pages via `peaceiris/actions-gh-pages`
 
 **Backend** (`.github/workflows/deploy-api.yml`):
+
 * Triggers on push to `master` only when `api/**` files change
 * Authenticates to GCP via Workload Identity Federation (no long-lived keys)
 * Deploys to Cloud Run from source (`gcloud run deploy --source`)
@@ -424,7 +426,41 @@ These are **explicitly NOT required now**, but should influence design decisions
 
 ---
 
-## 15. AI Agent Guidelines
+## 15. Audio Player Bug Fixes
+
+### Bug 1 — Audio continues past clip boundary when the app is backgrounded on mobile
+
+**Root cause:**
+Clip duration enforcement in `useAudioPlayer` is driven entirely by `requestAnimationFrame` (`updateProgress`). On mobile browsers, rAF is suspended when the user backgrounds the app (home button, app switcher, lock screen). The native `HTMLAudioElement`, however, is managed by the OS audio layer and keeps playing uninterrupted. When the user returns, rAF resumes and eventually fires the boundary check — but by then the audio has already played past the allowed `clipDuration`.
+
+**Considerations:**
+- The `timeupdate` event on `HTMLAudioElement` fires roughly every 250 ms and, unlike rAF, continues to fire even in backgrounded tabs/apps on most mobile browsers. Adding a `timeupdate` listener that calls `stopPlayback()` when `audio.currentTime >= clipDuration` provides a reliable second line of defense that is independent of rAF.
+- Listening to `visibilitychange` on `document` and calling `stopPlayback()` when `document.visibilityState === 'hidden'` is an even simpler, more aggressive fix — the audio is cut the moment the user backgrounds the app. This is also a reasonable UX choice (the clip is treated as a one-shot listen per press).
+- The `ended` native event only fires at the natural end of the full audio file, not at the clip boundary, so it is insufficient on its own.
+- rAF should be kept for smooth progress bar animation while the app is in the foreground; it should not be the sole clip-enforcement mechanism.
+
+**Planned fix:**
+In `useAudioPlayer`, add a `timeupdate` event listener on the audio element (inside the `src` effect) that calls `stopPlayback()` when `audio.currentTime >= clipDuration`. This listener fires regardless of rAF state and covers the background-tab/backgrounded-app case. The existing rAF loop is kept for fluid progress bar updates. The listener must be removed in the effect cleanup alongside the audio teardown.
+
+---
+
+### Bug 2 — Play button shows stale "playing" state after navigating to a different day
+
+**Root cause:**
+When the user navigates to a different day, `AudioPlayer` sets `audioSrc` to `null` (triggering a re-fetch). This changes the `src` prop passed to `useAudioPlayer` from the old URL to `''`. The `useEffect([src])` cleanup correctly pauses the audio and clears `audio.src`, but it does **not** call `setIsPlaying(false)`. React state `isPlaying` remains `true` from the previous day's session. When the new audio URL resolves and the player re-renders out of skeleton mode, the button displays "⏹ Stop" even though nothing is playing.
+
+**Considerations:**
+- The cleanup of the `src` effect needs to reset all playback-related React state (`isPlaying`, `progress`) in addition to pausing and clearing the audio element.
+- This must also cancel the in-flight rAF loop so stale animation frames cannot race and re-set `isPlaying` to `true` after the cleanup.
+- The `stopPlayback` callback already encapsulates this logic (pause, reset `currentTime`, cancel rAF, `setIsPlaying(false)`, `setProgress(0)`). Calling it — or mirroring its logic — at the top of the `src` effect (i.e. at the moment a new src arrives, not just on unmount) is the cleanest path.
+- The `clipDuration` change effect already calls `stopPlayback()`, but navigating between days does not necessarily change `clipDuration` (both days might be on guess index 0), so that effect alone cannot be relied on.
+
+**Planned fix:**
+In the `src` effect inside `useAudioPlayer`, explicitly reset state both at the start of the effect (when a new src arrives) and in the cleanup (on unmount / next change). Concretely: call `cancelAnimationFrame(animFrameRef.current)`, `setIsPlaying(false)`, and `setProgress(0)` at the top of the effect body, before creating the new `Audio` instance. The cleanup already handles pausing and clearing the element; it should also include the same state resets.
+
+---
+
+## 16. AI Agent Guidelines
 
 When modifying or extending this project:
 
@@ -440,13 +476,13 @@ When modifying or extending this project:
 
 ---
 
-## 16. Open Questions / To Be Defined
+## 17. Open Questions / To Be Defined
 
 *All previously open questions have been resolved and documented above.*
 
 ---
 
-## 17. Versioning Philosophy
+## 18. Versioning Philosophy
 
 * Start minimal and iterate
 * Avoid premature scaling decisions
@@ -454,7 +490,7 @@ When modifying or extending this project:
 
 ---
 
-## 18. Definition of Done (MVP)
+## 19. Definition of Done (MVP)
 
 The MVP is complete when:
 

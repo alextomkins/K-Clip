@@ -24,8 +24,14 @@ export function useAudioPlayer({ src, clipDuration, volume = 1 }: UseAudioPlayer
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState(false)
 
-  // Initialize audio element once, update src when it changes
+  // Initialize audio element once, update src when it changes.
+  // Reset playback state immediately so stale isPlaying/progress from a
+  // previous day never bleeds into the newly loaded player
   useEffect(() => {
+    cancelAnimationFrame(animFrameRef.current)
+    setIsPlaying(false)
+    setProgress(0)
+
     const audio = new Audio(src)
     audio.preload = 'auto'
     audioRef.current = audio
@@ -34,6 +40,8 @@ export function useAudioPlayer({ src, clipDuration, volume = 1 }: UseAudioPlayer
       audio.pause()
       audio.src = ''
       cancelAnimationFrame(animFrameRef.current)
+      setIsPlaying(false)
+      setProgress(0)
     }
   }, [src])
 
@@ -46,6 +54,25 @@ export function useAudioPlayer({ src, clipDuration, volume = 1 }: UseAudioPlayer
     setIsPlaying(false)
     setProgress(0)
   }, [])
+
+  // Enforce the clip boundary via timeupdate, which fires even when the app
+  // is backgrounded on mobile (unlike rAF). Re-attach whenever clipDuration
+  // or the audio element changes
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    const handleTimeUpdate = () => {
+      if (audio.currentTime >= clipDuration) {
+        stopPlayback()
+      }
+    }
+
+    audio.addEventListener('timeupdate', handleTimeUpdate)
+    return () => audio.removeEventListener('timeupdate', handleTimeUpdate)
+  // src is included so the listener re-attaches to the new Audio instance
+  // whenever the source changes.
+  }, [clipDuration, stopPlayback, src])
 
   const updateProgress = useCallback(() => {
     const audio = audioRef.current
