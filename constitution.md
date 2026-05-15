@@ -64,9 +64,9 @@ After the game ends:
 ### Share Output Format
 
 ```text
-🎵 K-Clip #12
-🟩🟥🟥⬜⬜⬜
-Guessed in 1/6
+🎵 K-Clip #52
+🟥🟧🟧🟩⬜⬜
+Guessed in 4/6
 
 https://alextomkins.github.io/K-Clip/ 🎵
 ```
@@ -104,11 +104,13 @@ https://alextomkins.github.io/K-Clip/ 🎵
 Both frontend and backend deploy automatically via GitHub Actions on push to `master`.
 
 **Frontend** (`.github/workflows/deploy.yml`):
+
 * Triggers on any push to `master`
 * Builds with Vite, injecting Firebase + API secrets as env vars
 * Deploys static output to GitHub Pages via `peaceiris/actions-gh-pages`
 
 **Backend** (`.github/workflows/deploy-api.yml`):
+
 * Triggers on push to `master` only when `api/**` files change
 * Authenticates to GCP via Workload Identity Federation (no long-lived keys)
 * Deploys to Cloud Run from source (`gcloud run deploy --source`)
@@ -138,6 +140,8 @@ Both frontend and backend deploy automatically via GitHub Actions on push to `ma
 * Firebase app is initialised in `src/lib/firebase.ts` using `VITE_FIREBASE_*` env vars
 * Playback volume is set to **0.7** by default via the `volume` prop on `useAudioPlayer`
 * While audio URLs are loading, the `AudioPlayer` component shows a skeleton UI with a spinner
+* Clip boundary enforcement uses both `requestAnimationFrame` (for smooth progress bar animation) and a `timeupdate` event listener (which fires even when the app is backgrounded on mobile, ensuring the clip always stops at the correct duration)
+* Playback state (`isPlaying`, `progress`) is reset synchronously when the audio source changes, preventing stale "playing" UI when the user navigates between days
 
 ### UI Features
 

@@ -57,13 +57,13 @@ builder.Services.AddCors(options =>
 builder.Services.AddResponseCaching();
 builder.Services.AddControllers();
 
-// Rate limiting: 10 requests per minute per IP for guess/answer endpoints
+// Rate limiting: 50 requests per minute per IP for guess/answer endpoints
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddFixedWindowLimiter("guess", limiter =>
     {
-        limiter.PermitLimit = 10;
+        limiter.PermitLimit = 50;
         limiter.Window = TimeSpan.FromMinutes(1);
         limiter.QueueLimit = 0;
     });
